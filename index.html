@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>구비서류 Finder – KT 전용 (견고화)</title>
+  <title>구비서류 Finder – KT 전용 (Cascading)</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
         <div class="logo"></div>
         <div>
           <div class="title">휴대폰 개통 업무유형별 구비서류 Finder</div>
-          <p class="sub">KT 전용 테마 · 계단식 필터 · 목록 가독성 · <b>헤더 자동 정규화 & 진단</b></p>
+          <p class="sub">KT 전용 테마 · <b>순차 선택(업무처리→상세→개통자→방문자) 시 불가능한 선택지 자동 제거</b> · 복사·인쇄 지원</p>
         </div>
       </div>
       <nav class="nav">
@@ -21,8 +21,6 @@
         <a href="./admin.html">데이터 업로더</a>
       </nav>
     </div>
-
-    <div id="diagnostics" class="note" style="display:none"></div>
 
     <div class="card p4">
       <div class="grid grid-5">
@@ -61,134 +59,141 @@
 
 <script>
 const $ = (sel) => document.querySelector(sel);
-const els = { q: $("#q"), type: $("#type"), subtype: $("#subtype"), opener: $("#opener"), visitor: $("#visitor"),
-  results: $("#results"), count: $("#count"), empty: $("#empty"), reset: $("#reset"), diag: $("#diagnostics") };
+const els = {
+  q: $("#q"),
+  type: $("#type"),
+  subtype: $("#subtype"),
+  opener: $("#opener"),
+  visitor: $("#visitor"),
+  results: $("#results"),
+  count: $("#count"),
+  empty: $("#empty"),
+  reset: $("#reset"),
+};
 
-const CANON = ["업무처리 유형","상세유형","개통자","방문자","구비서류(필수)","구비서류(상황별)"];
-const stripBOM = s => String(s||"").replace(/\uFEFF/g,"");
-const norm = s => stripBOM(s).replace(/[\s_\-\/\\|~:`'"!?.,;·•ㆍ()\[\]{}<>]/g,"").toLowerCase();
-const ALIAS = new Map(Object.entries({
-  "업무처리유형":"업무처리 유형","업무유형":"업무처리 유형","업무":"업무처리 유형","처리유형":"업무처리 유형",
-  "상세유형":"상세유형","세부유형":"상세유형","상세":"상세유형",
-  "개통자":"개통자","가입자":"개통자","명의자":"개통자",
-  "방문자":"방문자","내방자":"방문자","대리방문자":"방문자",
-  "구비서류필수":"구비서류(필수)","필수":"구비서류(필수)","필수구비서류":"구비서류(필수)",
-  "구비서류상황별":"구비서류(상황별)","상황별":"구비서류(상황별)","추가서류":"구비서류(상황별)","선택":"구비서류(상황별)"
-}));
+let DATA = [];
 
-function toCanonicalRecord(raw){
-  const out = {}; Object.keys(raw||{}).forEach(k=>{
-    const nk = norm(k); let canon = null;
-    for (const c of CANON){ if(nk===norm(c)) { canon=c; break; } }
-    if(!canon && ALIAS.has(nk)) canon = ALIAS.get(nk);
-    if(!canon){
-      if(nk.includes("필수")&&nk.includes("서류")) canon="구비서류(필수)";
-      else if((nk.includes("상황")||nk.includes("추가")||nk.includes("선택"))&&nk.includes("서류")) canon="구비서류(상황별)";
-      else if(nk.includes("업무")&&nk.includes("유형")) canon="업무처리 유형";
-      else if(nk.includes("상세")&&nk.includes("유형")) canon="상세유형";
-      else if(nk.includes("개통")||nk.includes("가입")||nk.includes("명의")) canon="개통자";
-      else if(nk.includes("방문")||nk.includes("내방")) canon="방문자";
-    }
-    if(canon) out[canon] = stripBOM(raw[k]).toString().trim();
-  });
-  return out;
-}
-function normalizeDataset(rows){ return (rows||[]).map(toCanonicalRecord).filter(r=>CANON.every(c=>c in r)); }
-
-async function loadData(){
-  try{
-    const res = await fetch("./device_documents_db.json", {cache:"no-store"});
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const j = await res.json();
-    return Array.isArray(j) ? j : (Array.isArray(j?.data) ? j.data : (Array.isArray(j?.records) ? j.records : []));
-  }catch(e){
-    els.diag.style.display="block";
-    els.diag.innerHTML = `<div class="danger"><b>로드 실패:</b> ${String(e)}</div>
-    <div>확인: <code>device_documents_db.json</code>가 <b>index.html과 같은 폴더</b>에 있는지.</div>`;
-    return [];
-  }
-}
-
-let RAW=[], DATA=[];
-loadData().then(rows=>{
-  RAW = rows; DATA = normalizeDataset(RAW);
-  if(!RAW.length){
-    els.diag.style.display="block";
-    els.diag.innerHTML += `<div>JSON이 비어 있거나 루트가 배열이 아닙니다.</div>`;
-  } else if(!DATA.length){
-    els.diag.style.display="block";
-    const keys = Object.keys(RAW[0]||{}).map(k=>`<kbd>${k}</kbd>`).join(" ");
-    els.diag.innerHTML += `<div class="danger"><b>헤더 불일치:</b> 원본 ${RAW.length}건 → 정규화 후 0건</div>
-    <div>첫 행의 키: ${keys||"(없음)"} / 필요한 키: <kbd>업무처리 유형</kbd> <kbd>상세유형</kbd> <kbd>개통자</kbd> <kbd>방문자</kbd> <kbd>구비서류(필수)</kbd> <kbd>구비서류(상황별)</kbd></div>`;
-  } else {
-    els.diag.style.display="block";
-    els.diag.innerHTML = `<div>데이터 로드 OK · 원본 ${RAW.length}건 → 정규화 ${DATA.length}건</div>`;
-  }
-  initCascading(); render();
-});
+fetch("./device_documents_db.json")
+  .then(r => r.json())
+  .then(j => { DATA = j; initCascading(); render(); })
+  .catch(() => { els.results.innerHTML = "<p>데이터를 불러오지 못했습니다.</p>"; });
 
 function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
+
 function initCascading(){
+  // 초기: type만 활성화
   populate(els.type, uniqueSorted(DATA.map(r=>String(r["업무처리 유형"]||""))), "");
-  setEnabled(els.subtype, false); setEnabled(els.opener, false); setEnabled(els.visitor, false);
+  setEnabled(els.subtype, false);
+  setEnabled(els.opener, false);
+  setEnabled(els.visitor, false);
+
   els.type.addEventListener("change", onTypeChange);
   els.subtype.addEventListener("change", onSubtypeChange);
   els.opener.addEventListener("change", onOpenerChange);
   els.visitor.addEventListener("change", ()=>render());
+
   els.q.addEventListener("input", ()=>render());
-  els.reset.addEventListener("click", ()=>{ els.q.value=""; setValue(els.type,""); onTypeChange(); render(); });
+
+  els.reset.addEventListener("click", ()=>{
+    els.q.value=""; 
+    setValue(els.type,"");
+    onTypeChange(); // 이 안에서 하위 초기화
+    render();
+  });
 }
+
 function onTypeChange(){
   const type = els.type.value;
-  const subtypes = uniqueSorted(DATA.filter(r => !type || String(r["업무처리 유형"])===type).map(r => String(r["상세유형"]||"")));
-  populate(els.subtype, subtypes, ""); setEnabled(els.subtype, true);
-  populate(els.opener, [], ""); setEnabled(els.opener, false);
-  populate(els.visitor, [], ""); setEnabled(els.visitor, false); render();
+  // 상세유형 옵션 재구성
+  const subtypes = uniqueSorted(DATA
+    .filter(r => !type || String(r["업무처리 유형"])===type)
+    .map(r => String(r["상세유형"]||"")));
+  populate(els.subtype, subtypes, "");
+  setEnabled(els.subtype, true);
+
+  // 하위 단계 초기화/비활성화
+  populate(els.opener, [], "");
+  setEnabled(els.opener, false);
+  populate(els.visitor, [], "");
+  setEnabled(els.visitor, false);
+  render();
 }
+
 function onSubtypeChange(){
-  const type = els.type.value, subtype = els.subtype.value;
-  const openers = uniqueSorted(DATA.filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype)).map(r => String(r["개통자"]||"")));
-  populate(els.opener, openers, ""); setEnabled(els.opener, true);
-  populate(els.visitor, [], ""); setEnabled(els.visitor, false); render();
+  const type = els.type.value;
+  const subtype = els.subtype.value;
+  // 개통자 옵션 재구성
+  const openers = uniqueSorted(DATA
+    .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype))
+    .map(r => String(r["개통자"]||"")));
+  populate(els.opener, openers, "");
+  setEnabled(els.opener, true);
+
+  // 방문자 초기화/비활성화
+  populate(els.visitor, [], "");
+  setEnabled(els.visitor, false);
+  render();
 }
+
 function onOpenerChange(){
-  const type = els.type.value, subtype = els.subtype.value, opener = els.opener.value;
-  const visitors = uniqueSorted(DATA.filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype) && (!opener || String(r["개통자"])===opener)).map(r => String(r["방문자"]||"")));
-  populate(els.visitor, visitors, ""); setEnabled(els.visitor, true); render();
+  const type = els.type.value;
+  const subtype = els.subtype.value;
+  const opener = els.opener.value;
+  // 방문자 옵션 재구성
+  const visitors = uniqueSorted(DATA
+    .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype) && (!opener || String(r["개통자"])===opener))
+    .map(r => String(r["방문자"]||"")));
+  populate(els.visitor, visitors, "");
+  setEnabled(els.visitor, true);
+  render();
 }
-function setEnabled(select, enabled){ select.disabled = !enabled; if(!enabled) setValue(select, ""); }
-function setValue(select, val){ select.value = val; }
+
+function setEnabled(select, enabled){
+  select.disabled = !enabled;
+  if(!enabled) setValue(select, "");
+}
+
+function setValue(select, val){
+  select.value = val;
+}
+
 function populate(select, options, keepValue){
-  const current = select.value, want = keepValue || current;
+  const current = select.value;
+  const want = keepValue || current;
   select.innerHTML = "<option value=''>전체</option>" + options.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
-  if(want && options.includes(want)) select.value = want; else select.value = "";
+  // 선택값이 아직 유효하면 유지
+  if(want && options.includes(want)) select.value = want;
+  else select.value = "";
 }
+
 function render(){
   const query = (els.q.value || "").trim().toLowerCase();
   const type = els.type.value, subtype = els.subtype.value, opener = els.opener.value, visitor = els.visitor.value;
+
   const filtered = DATA.filter(r=>{
     const t = !type || String(r["업무처리 유형"])===type;
     const s = !subtype || String(r["상세유형"])===subtype;
     const o = !opener || String(r["개통자"])===opener;
     const v = !visitor || String(r["방문자"])===visitor;
-    const text = (`${r.id||""} ${r["업무처리 유형"]||""} ${r["상세유형"]||""} ${r["개통자"]||""} ${r["방문자"]||""} ${r["구비서류(필수)"]||""} ${r["구비서류(상황별)"]||""}`).toLowerCase();
+    const text = (`${r.id} ${r["업무처리 유형"]} ${r["상세유형"]} ${r["개통자"]} ${r["방문자"]} ${r["구비서류(필수)"]} ${r["구비서류(상황별)"]}`).toLowerCase();
     const q = !query || text.includes(query);
     return t&&s&&o&&v&&q;
   });
+
   els.count.textContent = filtered.length;
   els.results.innerHTML = "";
   els.empty.style.display = filtered.length ? "none" : "block";
-  filtered.forEach((rec, idx)=>{
-    const id = rec.id || `DOC-${String(idx+1).padStart(3,"0")}`;
+
+  filtered.forEach(rec=>{
     const card = document.createElement("div");
     card.className = "card p4";
     card.innerHTML = `
       <div class="row" style="justify-content:space-between;align-items:center">
         <div class="row">
-          <span class="badge">${escapeHtml(rec["업무처리 유형"]||"")}</span>
-          <span class="badge">${escapeHtml(rec["상세유형"]||"")}</span>
-          <span class="badge">개통자:${escapeHtml(rec["개통자"]||"")}</span>
-          <span class="badge">방문자:${escapeHtml(rec["방문자"]||"")}</span>
+          <span class="badge">${rec["업무처리 유형"]}</span>
+          <span class="badge">${rec["상세유형"]}</span>
+          <span class="badge">개통자:${rec["개통자"]}</span>
+          <span class="badge">방문자:${rec["방문자"]}</span>
         </div>
         <div class="row">
           <button class="btn js-copy">복사</button>
@@ -197,61 +202,53 @@ function render(){
       </div>
       <section>
         <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (필수)</h3>
-        ${renderList(rec["구비서류(필수)"])}
+        <pre>${escapeHtml(rec["구비서류(필수)"]||"")}</pre>
       </section>
       <section>
         <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (상황별)</h3>
-        ${renderList(rec["구비서류(상황별)"])}
+        <pre>${escapeHtml(rec["구비서류(상황별)"]||"")}</pre>
       </section>
-      <div class="small">ID: ${escapeHtml(id)}</div>
+      <div class="small">ID: ${rec.id}</div>
     `;
-    card.querySelector(".js-copy").addEventListener("click", ()=>copyRec(rec, id));
-    card.querySelector(".js-print").addEventListener("click", ()=>printRec(rec, id));
+    card.querySelector(".js-copy").addEventListener("click", ()=>copyRec(rec));
+    card.querySelector(".js-print").addEventListener("click", ()=>printRec(rec));
     els.results.appendChild(card);
   });
 }
-function listItemsFromText(s){
-  const raw = String(s||"").replace(/
-/g, ",");
-  const parts = raw.split(/[，,;\/•·ㆍ]+/).map(t=>t.trim()).filter(Boolean);
-  return parts.length ? parts : (String(s||"") ? [String(s)] : []);
-}
-function renderList(s){
-  const items = listItemsFromText(s).map(x=>escapeHtml(x));
-  if(!items.length) return `<div class="small" style="color:var(--muted)">-</div>`;
-  const htmlItems = items.map(x=>x.replace(/\sor\s/gi,' <span class="alt">or</span> ').replace(/\s또는\s/g,' <span class="alt">또는</span> '));
-  return `<ul class="list">` + htmlItems.map(x=>`<li>${x}</li>`).join("") + `</ul>`;
-}
-function copyRec(rec, id){
-  const req = listItemsFromText(rec["구비서류(필수)"]).map(x=>`- ${x}`).join("\n") || "-";
-  const opt = listItemsFromText(rec["구비서류(상황별)"]).map(x=>`- ${x}`).join("\n") || "-";
-  const txt = `[#${id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
+
+function copyRec(rec){
+  const txt = `[#${rec.id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
 개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
 
-[필수]
-${req}
-
-[상황별]
-${opt}`;
-  if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); }
-  else { const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+[필수] ${rec["구비서류(필수)"]}
+[상황별] ${rec["구비서류(상황별)"]}`;
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+  }
 }
-function printRec(rec, id){
-  const req = listItemsFromText(rec["구비서류(필수)"]).map(x=>`- ${x}`).join("\n") || "-";
-  const opt = listItemsFromText(rec["구비서류(상황별)"]).map(x=>`- ${x}`).join("\n") || "-";
-  const w = window.open("", "printwin"); if(!w) return;
+
+function printRec(rec){
+  const w = window.open("", "printwin");
+  if(!w) return;
   w.document.write(`<pre style="font-family:ui-monospace,Menlo,Consolas;white-space:pre-wrap;line-height:1.5">${escapeHtml(
-`[#${id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
+`[#${rec.id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
 개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
 
 [필수]
-${req}
+${rec["구비서류(필수)"]}
 
 [상황별]
-${opt}`)}</pre>`);
+${rec["구비서류(상황별)"]}`)}</pre>`);
   w.document.close(); w.print();
 }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;","&gt;":"&gt;",""":"&quot;","'":"&#39;" }[m])); }
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+}
 </script>
 </body>
 </html>

@@ -14,7 +14,7 @@
         <div class="logo"></div>
         <div>
           <div class="title">데이터 업로더</div>
-          <p class="sub">엑셀/CSV/JSON → 사이트용 JSON. <b>헤더 자동 정규화 & 검증</b></p>
+          <p class="sub">엑셀/CSV/JSON을 업로드 → 사이트용 JSON으로 변환 → 파일 다운로드(이후 GitHub에 교체 업로드)</p>
         </div>
       </div>
       <nav class="nav">
@@ -56,7 +56,7 @@
             <div style="font-weight:600">미리보기</div>
             <p class="small">상위 10행만 표시</p>
           </div>
-          <div class="small">필수 필드: 업무처리 유형, 상세유형, 개통자, 방문자, 구비서류(필수), 구비서류(상황별)</div>
+          <div class="small">필수 컬럼: 업무처리 유형, 상세유형, 개통자, 방문자, 구비서류(필수), 구비서류(상황별)</div>
         </div>
         <div id="preview" style="overflow:auto;max-height:360px"></div>
       </div>
@@ -65,7 +65,7 @@
         <div class="row" style="justify-content:space-between">
           <div>
             <div style="font-weight:600">검증 결과</div>
-            <p class="small">헤더 매핑/빈값/형식 오류 점검</p>
+            <p class="small">필드 누락/빈값/형식 오류 점검</p>
           </div>
           <div class="row">
             <button class="btn" id="validate">검증 실행</button>
@@ -74,51 +74,48 @@
         <pre id="report" class="small"></pre>
       </div>
 
-      <div class="footer">교체 방법: 변환 JSON 다운로드 → GitHub에 <code>device_documents_db.json</code>로 업로드(루트/같은 폴더) → 커밋</div>
+      <div class="footer">데이터 교체 방법: 변환 JSON 다운로드 → GitHub 저장소에서 <code>device_documents_db.json</code> 파일을 이 파일로 교체 업로드 → 커밋</div>
     </div>
   </div>
 
 <script>
 const REQUIRED = ["업무처리 유형","상세유형","개통자","방문자","구비서류(필수)","구비서류(상황별)"];
-const stripBOM = s => String(s||"").replace(/\uFEFF/g,"");
-const norm = s => stripBOM(s).replace(/[\s_\-\/\\|~:`'"!?.,;·•ㆍ()\[\]{}<>]/g,"").toLowerCase();
-const ALIAS = new Map(Object.entries({
-  "업무처리유형":"업무처리 유형","업무유형":"업무처리 유형","업무":"업무처리 유형","처리유형":"업무처리 유형",
-  "상세유형":"상세유형","세부유형":"상세유형","상세":"상세유형",
-  "개통자":"개통자","가입자":"개통자","명의자":"개통자",
-  "방문자":"방문자","내방자":"방문자","대리방문자":"방문자",
-  "구비서류필수":"구비서류(필수)","필수":"구비서류(필수)","필수구비서류":"구비서류(필수)",
-  "구비서류상황별":"구비서류(상황별)","상황별":"구비서류(상황별)","추가서류":"구비서류(상황별)","선택":"구비서류(상황별)"
-}));
+let RAW = [];      // 원본 테이블 형식
+let OUTPUT = [];   // 사이트용 JSON
 
-let RAW=[], OUTPUT=[];
+const PASSWORD = "ktms";
 const authBox = document.getElementById("authBox");
 const adminArea = document.getElementById("adminArea");
 document.getElementById("enter").addEventListener("click", ()=>{
   const pw = (document.getElementById("pw").value||"").trim();
-  if(pw==="ktms"){ authBox.style.display="none"; adminArea.style.display="block"; }
+  if(pw===PASSWORD){ authBox.style.display="none"; adminArea.style.display="block"; }
   else alert("비밀번호가 올바르지 않습니다.");
 });
+
 document.getElementById("convert").addEventListener("click", ()=>convertToJson());
 document.getElementById("dl").addEventListener("click", ()=>downloadJson());
 document.getElementById("validate").addEventListener("click", ()=>validate());
+
 document.getElementById("file").addEventListener("change", handleFile, false);
 
 function handleFile(e){
-  const file = e.target.files[0]; if(!file) return;
+  const file = e.target.files[0];
+  if(!file) return;
   const ext = file.name.split(".").pop().toLowerCase();
+
   if(ext==="json"){
     const reader = new FileReader();
     reader.onload = (evt)=>{
       try{
-        const j = JSON.parse(evt.target.result);
-        RAW = Array.isArray(j) ? j : (Array.isArray(j?.data) ? j.data : (Array.isArray(j?.records) ? j.records : []));
+        RAW = JSON.parse(evt.target.result);
+        if(!Array.isArray(RAW)) throw new Error("JSON 루트가 배열이어야 합니다.");
         renderPreview(RAW);
       }catch(err){ alert("JSON 파싱 오류: "+err.message); }
     };
     reader.readAsText(file,"utf-8");
     return;
   }
+
   const reader = new FileReader();
   reader.onload = (evt)=>{
     const data = new Uint8Array(evt.target.result);
@@ -139,30 +136,24 @@ function renderPreview(rows){
   document.getElementById("preview").innerHTML = `<table style="border-collapse:collapse;width:100%">${thead}${tbody}</table>`;
 }
 
-function mapHeaders(row){
-  const out={};
-  Object.keys(row||{}).forEach(k=>{
-    const nk = norm(k); let target = null;
-    for (const c of REQUIRED){ if(nk===norm(c)) { target=c; break; } }
-    if(!target && ALIAS.has(nk)) target = ALIAS.get(nk);
-    if(!target){
-      if (nk.includes("필수") && nk.includes("서류")) target = "구비서류(필수)";
-      else if ((nk.includes("상황")||nk.includes("추가")||nk.includes("선택")) && nk.includes("서류")) target = "구비서류(상황별)";
-      else if (nk.includes("업무") && nk.includes("유형")) target = "업무처리 유형";
-      else if (nk.includes("상세") && nk.includes("유형")) target = "상세유형";
-      else if (nk.includes("개통") || nk.includes("가입") || nk.includes("명의")) target = "개통자";
-      else if (nk.includes("방문") || nk.includes("내방")) target = "방문자";
-    }
-    if(target) out[target] = stripBOM(row[k]).toString().trim();
-  });
-  return out;
-}
-
 function convertToJson(){
   if(!RAW.length){ alert("먼저 파일을 업로드하세요."); return; }
-  OUTPUT = RAW.map((r, i)=>{ const rec = mapHeaders(r); rec.id = `DOC-${String(i+1).padStart(3,"0")}`; return rec; })
-              .filter(r => REQUIRED.every(k=>k in r));
-  alert(`변환 완료: ${OUTPUT.length}건 (원본 ${RAW.length}건)`);
+  OUTPUT = RAW.map((r, i)=>{
+    const rec = {
+      id: `DOC-${String(i+1).padStart(3,"0")}`,
+      "업무처리 유형": String(r["업무처리 유형"]||"").trim(),
+      "상세유형": String(r["상세유형"]||"").trim(),
+      "개통자": String(r["개통자"]||"").trim(),
+      "방문자": String(r["방문자"]||"").trim(),
+      "구비서류(필수)": String(r["구비서류(필수)"]||"").trim(),
+      "구비서류(상황별)": String(r["구비서류(상황별)"]||"").trim(),
+    };
+    rec.slug = makeSlug(rec["업무처리 유형"], rec["상세유형"], rec["개통자"], rec["방문자"]);
+    rec.keywords = Array.from(new Set((`${rec["업무처리 유형"]} ${rec["상세유형"]} ${rec["개통자"]} ${rec["방문자"]}`)
+      .split(/[\\s,/]+/).filter(Boolean)));
+    return rec;
+  });
+  alert(`변환 완료: ${OUTPUT.length}건`);
 }
 
 function downloadJson(){
@@ -171,18 +162,32 @@ function downloadJson(){
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "device_documents_db.json";
-  document.body.appendChild(a); a.click(); a.remove();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function validate(){
   if(!OUTPUT.length){ alert("먼저 변환을 실행하세요."); return; }
   const problems = [];
-  OUTPUT.forEach((r, idx)=>{ REQUIRED.forEach(k=>{ if(!(k in r) || !String(r[k]||"").trim()) problems.push(`#${idx+1} 누락/빈값: ${k}`); }); });
-  const msg = problems.length ? `오류 ${problems.length}건\n`+problems.join("\n") : "이상 없음 · 형식 OK";
+  OUTPUT.forEach((r, idx)=>{
+    REQUIRED.forEach(key=>{
+      if(!(key in r)) problems.push(`#${idx+1} 필드 누락: ${key}`);
+      else if(!String(r[key]||\"\")) problems.push(`#${idx+1} 빈 값: ${key}`);
+    });
+  });
+  const msg = problems.length ? `오류 ${problems.length}건\\n`+problems.join("\\n") : "이상 없음 · 형식 OK";
   document.getElementById("report").textContent = msg;
 }
 
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;","&gt;":"&gt;",""":"&quot;","'":"&#39;" }[m])); }
+function makeSlug(){
+  const parts = Array.from(arguments).map(String).filter(Boolean).join("-");
+  return parts.replace(/\\s+/g,"-").replace(/[^0-9A-Za-z가-힣\\-<>/()]/g,"").toLowerCase();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>\"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+}
 </script>
 </body>
 </html>
