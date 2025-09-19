@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>구비서류 Finder – KT 전용</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div class="title">휴대폰 개통 업무유형별 구비서류 Finder</div>
+          <p class="sub">KT 전용 테마 · 빠른 검색·필터 · 복사·인쇄 지원</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="./index.html" class="active">검색</a>
+        <a href="./admin.html">데이터 업로더</a>
+      </nav>
+    </div>
+
+    <div class="card p4">
+      <div class="grid grid-5">
+        <div>
+          <label>검색어</label>
+          <input id="q" placeholder="예: 미성년자 / 인감증명서 / 명의변경">
+        </div>
+        <div>
+          <label>업무처리 유형</label>
+          <select id="type"><option value="">전체</option></select>
+        </div>
+        <div>
+          <label>상세유형</label>
+          <select id="subtype"><option value="">전체</option></select>
+        </div>
+        <div>
+          <label>개통자</label>
+          <select id="opener"><option value="">전체</option></select>
+        </div>
+        <div>
+          <label>방문자</label>
+          <select id="visitor"><option value="">전체</option></select>
+        </div>
+        <div class="row" style="grid-column:1/-1">
+          <button class="btn" id="reset">초기화</button>
+          <span class="small">검색 결과: <b id="count">0</b>건</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="results" id="results" style="margin-top:12px"></div>
+    <p id="empty" class="small" style="display:none;margin-top:8px">조건에 맞는 항목이 없습니다. 필터 또는 검색어를 조정해보세요.</p>
+
+    <div class="footer">© KT M&S 내부 활용. 무단 배포 금지.</div>
+  </div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const els = {
+  q: $("#q"),
+  type: $("#type"),
+  subtype: $("#subtype"),
+  opener: $("#opener"),
+  visitor: $("#visitor"),
+  results: $("#results"),
+  count: $("#count"),
+  empty: $("#empty"),
+  reset: $("#reset"),
+};
+
+let DATA = [];
+
+fetch("./device_documents_db.json")
+  .then(r => r.json())
+  .then(j => { DATA = j; initFacets(j); render(); })
+  .catch(() => { els.results.innerHTML = "<p>데이터를 불러오지 못했습니다.</p>"; });
+
+function initFacets(data){
+  const sets = { type:new Set(), subtype:new Set(), opener:new Set(), visitor:new Set() };
+  data.forEach(r=>{
+    sets.type.add(String(r["업무처리 유형"]||""));
+    sets.subtype.add(String(r["상세유형"]||""));
+    sets.opener.add(String(r["개통자"]||""));
+    sets.visitor.add(String(r["방문자"]||""));
+  });
+  fillSelect(els.type, sets.type);
+  fillSelect(els.subtype, sets.subtype);
+  fillSelect(els.opener, sets.opener);
+  fillSelect(els.visitor, sets.visitor);
+
+  [els.q, els.type, els.subtype, els.opener, els.visitor].forEach(e=>e.addEventListener("input", render));
+  els.reset.addEventListener("click", ()=>{
+    els.q.value=""; els.type.value=""; els.subtype.value=""; els.opener.value=""; els.visitor.value="";
+    render();
+  });
+}
+
+function fillSelect(select, set){
+  const arr = Array.from(set).filter(Boolean).sort();
+  arr.forEach(v=>{
+    const opt = document.createElement("option");
+    opt.value = v; opt.textContent = v;
+    select.appendChild(opt);
+  });
+}
+
+function render(){
+  const query = (els.q.value || "").trim().toLowerCase();
+  const type = els.type.value, subtype = els.subtype.value, opener = els.opener.value, visitor = els.visitor.value;
+
+  const filtered = DATA.filter(r=>{
+    const t = !type || String(r["업무처리 유형"])===type;
+    const s = !subtype || String(r["상세유형"])===subtype;
+    const o = !opener || String(r["개통자"])===opener;
+    const v = !visitor || String(r["방문자"])===visitor;
+    const text = (`${r.id} ${r["업무처리 유형"]} ${r["상세유형"]} ${r["개통자"]} ${r["방문자"]} ${r["구비서류(필수)"]} ${r["구비서류(상황별)"]}`).toLowerCase();
+    const q = !query || text.includes(query);
+    return t&&s&&o&&v&&q;
+  });
+
+  els.count.textContent = filtered.length;
+  els.results.innerHTML = "";
+  els.empty.style.display = filtered.length ? "none" : "block";
+
+  filtered.forEach(rec=>{
+    const card = document.createElement("div");
+    card.className = "card p4";
+    card.innerHTML = `
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="row">
+          <span class="badge">${rec["업무처리 유형"]}</span>
+          <span class="badge">${rec["상세유형"]}</span>
+          <span class="badge">개통자:${rec["개통자"]}</span>
+          <span class="badge">방문자:${rec["방문자"]}</span>
+        </div>
+        <div class="row">
+          <button class="btn js-copy">복사</button>
+          <button class="btn js-print">인쇄</button>
+        </div>
+      </div>
+      <section>
+        <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (필수)</h3>
+        <pre>${escapeHtml(rec["구비서류(필수)"]||"")}</pre>
+      </section>
+      <section>
+        <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (상황별)</h3>
+        <pre>${escapeHtml(rec["구비서류(상황별)"]||"")}</pre>
+      </section>
+      <div class="small">ID: ${rec.id}</div>
+    `;
+    card.querySelector(".js-copy").addEventListener("click", ()=>copyRec(rec));
+    card.querySelector(".js-print").addEventListener("click", ()=>printRec(rec));
+    els.results.appendChild(card);
+  });
+}
+
+function copyRec(rec){
+  const txt = `[#${rec.id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
+개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
+
+[필수] ${rec["구비서류(필수)"]}
+[상황별] ${rec["구비서류(상황별)"]}`;
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+  }
+}
+
+function printRec(rec){
+  const w = window.open("", "printwin");
+  if(!w) return;
+  w.document.write(`<pre style="font-family:ui-monospace,Menlo,Consolas;white-space:pre-wrap;line-height:1.5">${escapeHtml(
+`[#${rec.id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
+개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
+
+[필수]
+${rec["구비서류(필수)"]}
+
+[상황별]
+${rec["구비서류(상황별)"]}`)}</pre>`);
+  w.document.close(); w.print();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+}
+</script>
+</body>
+</html>
