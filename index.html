@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>구비서류 Finder – KT 전용 (가독성 개선)</title>
+  <title>구비서류 Finder – KT 전용 (Cascading)</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
         <div class="logo"></div>
         <div>
           <div class="title">휴대폰 개통 업무유형별 구비서류 Finder</div>
-          <p class="sub">KT 전용 테마 · 계단식 필터 · <b>구비서류 항목을 줄바꿈 목록으로 표시</b></p>
+          <p class="sub">KT 전용 테마 · <b>순차 선택(업무처리→상세→개통자→방문자) 시 불가능한 선택지 자동 제거</b> · 복사·인쇄 지원</p>
         </div>
       </div>
       <nav class="nav">
@@ -81,6 +81,7 @@ fetch("./device_documents_db.json")
 function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
 
 function initCascading(){
+  // 초기: type만 활성화
   populate(els.type, uniqueSorted(DATA.map(r=>String(r["업무처리 유형"]||""))), "");
   setEnabled(els.subtype, false);
   setEnabled(els.opener, false);
@@ -96,37 +97,49 @@ function initCascading(){
   els.reset.addEventListener("click", ()=>{
     els.q.value=""; 
     setValue(els.type,"");
-    onTypeChange();
+    onTypeChange(); // 이 안에서 하위 초기화
     render();
   });
 }
 
 function onTypeChange(){
   const type = els.type.value;
-  const subtypes = uniqueSorted(DATA.filter(r => !type || String(r["업무처리 유형"])===type).map(r => String(r["상세유형"]||"")));
+  // 상세유형 옵션 재구성
+  const subtypes = uniqueSorted(DATA
+    .filter(r => !type || String(r["업무처리 유형"])===type)
+    .map(r => String(r["상세유형"]||"")));
   populate(els.subtype, subtypes, "");
   setEnabled(els.subtype, true);
 
-  populate(els.opener, [], ""); setEnabled(els.opener, false);
-  populate(els.visitor, [], ""); setEnabled(els.visitor, false);
+  // 하위 단계 초기화/비활성화
+  populate(els.opener, [], "");
+  setEnabled(els.opener, false);
+  populate(els.visitor, [], "");
+  setEnabled(els.visitor, false);
   render();
 }
 
 function onSubtypeChange(){
   const type = els.type.value;
   const subtype = els.subtype.value;
+  // 개통자 옵션 재구성
   const openers = uniqueSorted(DATA
     .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype))
     .map(r => String(r["개통자"]||"")));
   populate(els.opener, openers, "");
   setEnabled(els.opener, true);
 
-  populate(els.visitor, [], ""); setEnabled(els.visitor, false);
+  // 방문자 초기화/비활성화
+  populate(els.visitor, [], "");
+  setEnabled(els.visitor, false);
   render();
 }
 
 function onOpenerChange(){
-  const type = els.type.value, subtype = els.subtype.value, opener = els.opener.value;
+  const type = els.type.value;
+  const subtype = els.subtype.value;
+  const opener = els.opener.value;
+  // 방문자 옵션 재구성
   const visitors = uniqueSorted(DATA
     .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype) && (!opener || String(r["개통자"])===opener))
     .map(r => String(r["방문자"]||"")));
@@ -135,12 +148,22 @@ function onOpenerChange(){
   render();
 }
 
-function setEnabled(select, enabled){ select.disabled = !enabled; if(!enabled) setValue(select, ""); }
-function setValue(select, val){ select.value = val; }
+function setEnabled(select, enabled){
+  select.disabled = !enabled;
+  if(!enabled) setValue(select, "");
+}
+
+function setValue(select, val){
+  select.value = val;
+}
+
 function populate(select, options, keepValue){
-  const current = select.value, want = keepValue || current;
+  const current = select.value;
+  const want = keepValue || current;
   select.innerHTML = "<option value=''>전체</option>" + options.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
-  if(want && options.includes(want)) select.value = want; else select.value = "";
+  // 선택값이 아직 유효하면 유지
+  if(want && options.includes(want)) select.value = want;
+  else select.value = "";
 }
 
 function render(){
@@ -179,11 +202,11 @@ function render(){
       </div>
       <section>
         <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (필수)</h3>
-        ${renderList(rec["구비서류(필수)"])}
+        <pre>${escapeHtml(rec["구비서류(필수)"]||"")}</pre>
       </section>
       <section>
         <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (상황별)</h3>
-        ${renderList(rec["구비서류(상황별)"])}
+        <pre>${escapeHtml(rec["구비서류(상황별)"]||"")}</pre>
       </section>
       <div class="small">ID: ${rec.id}</div>
     `;
@@ -193,29 +216,12 @@ function render(){
   });
 }
 
-function listItemsFromText(s){
-  const parts = String(s||"").split(/[，,]+/).map(t=>t.trim()).filter(Boolean);
-  return parts.length ? parts : (String(s||"") ? [String(s)] : []);
-}
-
-function renderList(s){
-  const items = listItemsFromText(s).map(x=>escapeHtml(x));
-  if(!items.length) return `<div class="small" style="color:var(--muted)">-</div>`;
-  const htmlItems = items.map(x=>x.replace(/\sor\s/gi,' <span class="alt">or</span> ').replace(/\s또는\s/g,' <span class="alt">또는</span> '));
-  return `<ul class="list">` + htmlItems.map(x=>`<li>${x}</li>`).join("") + `</ul>`;
-}
-
 function copyRec(rec){
-  const req = listItemsFromText(rec["구비서류(필수)"]).map(x=>`- ${x}`).join("\n") || "-";
-  const opt = listItemsFromText(rec["구비서류(상황별)"]).map(x=>`- ${x}`).join("\n") || "-";
   const txt = `[#${rec.id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
 개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
 
-[필수]
-${req}
-
-[상황별]
-${opt}`;
+[필수] ${rec["구비서류(필수)"]}
+[상황별] ${rec["구비서류(상황별)"]}`;
   if (navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt);
   } else {
@@ -226,8 +232,6 @@ ${opt}`;
 }
 
 function printRec(rec){
-  const req = listItemsFromText(rec["구비서류(필수)"]).map(x=>`- ${x}`).join("\n") || "-";
-  const opt = listItemsFromText(rec["구비서류(상황별)"]).map(x=>`- ${x}`).join("\n") || "-";
   const w = window.open("", "printwin");
   if(!w) return;
   w.document.write(`<pre style="font-family:ui-monospace,Menlo,Consolas;white-space:pre-wrap;line-height:1.5">${escapeHtml(
@@ -235,15 +239,15 @@ function printRec(rec){
 개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
 
 [필수]
-${req}
+${rec["구비서류(필수)"]}
 
 [상황별]
-${opt}`)}</pre>`);
+${rec["구비서류(상황별)"]}`)}</pre>`);
   w.document.close(); w.print();
 }
 
 function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#39;" }[m]));
+  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
 }
 </script>
 </body>
