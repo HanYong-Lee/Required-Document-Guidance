@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>구비서류 Finder – KT 전용</title>
+  <title>구비서류 Finder – KT 전용 (Cascading)</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
         <div class="logo"></div>
         <div>
           <div class="title">휴대폰 개통 업무유형별 구비서류 Finder</div>
-          <p class="sub">KT 전용 테마 · 빠른 검색·필터 · 복사·인쇄 지원</p>
+          <p class="sub">KT 전용 테마 · <b>순차 선택(업무처리→상세→개통자→방문자) 시 불가능한 선택지 자동 제거</b> · 복사·인쇄 지원</p>
         </div>
       </div>
       <nav class="nav">
@@ -34,15 +34,15 @@
         </div>
         <div>
           <label>상세유형</label>
-          <select id="subtype"><option value="">전체</option></select>
+          <select id="subtype" disabled><option value="">전체</option></select>
         </div>
         <div>
           <label>개통자</label>
-          <select id="opener"><option value="">전체</option></select>
+          <select id="opener" disabled><option value="">전체</option></select>
         </div>
         <div>
           <label>방문자</label>
-          <select id="visitor"><option value="">전체</option></select>
+          <select id="visitor" disabled><option value="">전체</option></select>
         </div>
         <div class="row" style="grid-column:1/-1">
           <button class="btn" id="reset">초기화</button>
@@ -75,36 +75,95 @@ let DATA = [];
 
 fetch("./device_documents_db.json")
   .then(r => r.json())
-  .then(j => { DATA = j; initFacets(j); render(); })
+  .then(j => { DATA = j; initCascading(); render(); })
   .catch(() => { els.results.innerHTML = "<p>데이터를 불러오지 못했습니다.</p>"; });
 
-function initFacets(data){
-  const sets = { type:new Set(), subtype:new Set(), opener:new Set(), visitor:new Set() };
-  data.forEach(r=>{
-    sets.type.add(String(r["업무처리 유형"]||""));
-    sets.subtype.add(String(r["상세유형"]||""));
-    sets.opener.add(String(r["개통자"]||""));
-    sets.visitor.add(String(r["방문자"]||""));
-  });
-  fillSelect(els.type, sets.type);
-  fillSelect(els.subtype, sets.subtype);
-  fillSelect(els.opener, sets.opener);
-  fillSelect(els.visitor, sets.visitor);
+function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
 
-  [els.q, els.type, els.subtype, els.opener, els.visitor].forEach(e=>e.addEventListener("input", render));
+function initCascading(){
+  // 초기: type만 활성화
+  populate(els.type, uniqueSorted(DATA.map(r=>String(r["업무처리 유형"]||""))), "");
+  setEnabled(els.subtype, false);
+  setEnabled(els.opener, false);
+  setEnabled(els.visitor, false);
+
+  els.type.addEventListener("change", onTypeChange);
+  els.subtype.addEventListener("change", onSubtypeChange);
+  els.opener.addEventListener("change", onOpenerChange);
+  els.visitor.addEventListener("change", ()=>render());
+
+  els.q.addEventListener("input", ()=>render());
+
   els.reset.addEventListener("click", ()=>{
-    els.q.value=""; els.type.value=""; els.subtype.value=""; els.opener.value=""; els.visitor.value="";
+    els.q.value=""; 
+    setValue(els.type,"");
+    onTypeChange(); // 이 안에서 하위 초기화
     render();
   });
 }
 
-function fillSelect(select, set){
-  const arr = Array.from(set).filter(Boolean).sort();
-  arr.forEach(v=>{
-    const opt = document.createElement("option");
-    opt.value = v; opt.textContent = v;
-    select.appendChild(opt);
-  });
+function onTypeChange(){
+  const type = els.type.value;
+  // 상세유형 옵션 재구성
+  const subtypes = uniqueSorted(DATA
+    .filter(r => !type || String(r["업무처리 유형"])===type)
+    .map(r => String(r["상세유형"]||"")));
+  populate(els.subtype, subtypes, "");
+  setEnabled(els.subtype, true);
+
+  // 하위 단계 초기화/비활성화
+  populate(els.opener, [], "");
+  setEnabled(els.opener, false);
+  populate(els.visitor, [], "");
+  setEnabled(els.visitor, false);
+  render();
+}
+
+function onSubtypeChange(){
+  const type = els.type.value;
+  const subtype = els.subtype.value;
+  // 개통자 옵션 재구성
+  const openers = uniqueSorted(DATA
+    .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype))
+    .map(r => String(r["개통자"]||"")));
+  populate(els.opener, openers, "");
+  setEnabled(els.opener, true);
+
+  // 방문자 초기화/비활성화
+  populate(els.visitor, [], "");
+  setEnabled(els.visitor, false);
+  render();
+}
+
+function onOpenerChange(){
+  const type = els.type.value;
+  const subtype = els.subtype.value;
+  const opener = els.opener.value;
+  // 방문자 옵션 재구성
+  const visitors = uniqueSorted(DATA
+    .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype) && (!opener || String(r["개통자"])===opener))
+    .map(r => String(r["방문자"]||"")));
+  populate(els.visitor, visitors, "");
+  setEnabled(els.visitor, true);
+  render();
+}
+
+function setEnabled(select, enabled){
+  select.disabled = !enabled;
+  if(!enabled) setValue(select, "");
+}
+
+function setValue(select, val){
+  select.value = val;
+}
+
+function populate(select, options, keepValue){
+  const current = select.value;
+  const want = keepValue || current;
+  select.innerHTML = "<option value=''>전체</option>" + options.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+  // 선택값이 아직 유효하면 유지
+  if(want && options.includes(want)) select.value = want;
+  else select.value = "";
 }
 
 function render(){

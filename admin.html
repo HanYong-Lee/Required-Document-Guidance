@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>데이터 업로더 – KT 전용</title>
   <link rel="stylesheet" href="./styles.css">
-  <!-- SheetJS for Excel parsing (XLSX, CSV 지원) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -84,7 +83,6 @@ const REQUIRED = ["업무처리 유형","상세유형","개통자","방문자","
 let RAW = [];      // 원본 테이블 형식
 let OUTPUT = [];   // 사이트용 JSON
 
-// 간단 패스워드 (배포 전 원하는 값으로 바꾸세요)
 const PASSWORD = "ktms";
 const authBox = document.getElementById("authBox");
 const adminArea = document.getElementById("adminArea");
@@ -122,14 +120,12 @@ function handleFile(e){
   reader.onload = (evt)=>{
     const data = new Uint8Array(evt.target.result);
     const wb = XLSX.read(data, {type: "array"});
-    // 첫 시트를 사용
     const ws = wb.Sheets[wb.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(ws, {defval: ""});
     RAW = json;
     renderPreview(RAW);
   };
-  if(ext==="csv") reader.readAsArrayBuffer(file);
-  else reader.readAsArrayBuffer(file); // xlsx/xls
+  reader.readAsArrayBuffer(file);
 }
 
 function renderPreview(rows){
@@ -142,7 +138,6 @@ function renderPreview(rows){
 
 function convertToJson(){
   if(!RAW.length){ alert("먼저 파일을 업로드하세요."); return; }
-  // 스키마 정규화 + id/slug/keywords 생성
   OUTPUT = RAW.map((r, i)=>{
     const rec = {
       id: `DOC-${String(i+1).padStart(3,"0")}`,
