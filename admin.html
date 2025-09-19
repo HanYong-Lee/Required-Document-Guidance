@@ -80,9 +80,8 @@
 
 <script>
 const REQUIRED = ["업무처리 유형","상세유형","개통자","방문자","구비서류(필수)","구비서류(상황별)"];
-let RAW = [];      // 원본 테이블 형식
-let OUTPUT = [];   // 사이트용 JSON
-
+let RAW = [];
+let OUTPUT = [];
 const PASSWORD = "ktms";
 const authBox = document.getElementById("authBox");
 const adminArea = document.getElementById("adminArea");
@@ -91,11 +90,9 @@ document.getElementById("enter").addEventListener("click", ()=>{
   if(pw===PASSWORD){ authBox.style.display="none"; adminArea.style.display="block"; }
   else alert("비밀번호가 올바르지 않습니다.");
 });
-
 document.getElementById("convert").addEventListener("click", ()=>convertToJson());
 document.getElementById("dl").addEventListener("click", ()=>downloadJson());
 document.getElementById("validate").addEventListener("click", ()=>validate());
-
 document.getElementById("file").addEventListener("change", handleFile, false);
 
 function handleFile(e){
@@ -150,7 +147,7 @@ function convertToJson(){
     };
     rec.slug = makeSlug(rec["업무처리 유형"], rec["상세유형"], rec["개통자"], rec["방문자"]);
     rec.keywords = Array.from(new Set((`${rec["업무처리 유형"]} ${rec["상세유형"]} ${rec["개통자"]} ${rec["방문자"]}`)
-      .split(/[\\s,/]+/).filter(Boolean)));
+      .split(/[\s,/]+/).filter(Boolean)));
     return rec;
   });
   alert(`변환 완료: ${OUTPUT.length}건`);
@@ -171,22 +168,22 @@ function validate(){
   if(!OUTPUT.length){ alert("먼저 변환을 실행하세요."); return; }
   const problems = [];
   OUTPUT.forEach((r, idx)=>{
-    REQUIRED.forEach(key=>{
+    ["업무처리 유형","상세유형","개통자","방문자","구비서류(필수)","구비서류(상황별)"].forEach(key=>{
       if(!(key in r)) problems.push(`#${idx+1} 필드 누락: ${key}`);
-      else if(!String(r[key]||\"\")) problems.push(`#${idx+1} 빈 값: ${key}`);
+      else if(!String(r[key]||"")) problems.push(`#${idx+1} 빈 값: ${key}`);
     });
   });
-  const msg = problems.length ? `오류 ${problems.length}건\\n`+problems.join("\\n") : "이상 없음 · 형식 OK";
+  const msg = problems.length ? `오류 ${problems.length}건\n`+problems.join("\n") : "이상 없음 · 형식 OK";
   document.getElementById("report").textContent = msg;
 }
 
 function makeSlug(){
   const parts = Array.from(arguments).map(String).filter(Boolean).join("-");
-  return parts.replace(/\\s+/g,"-").replace(/[^0-9A-Za-z가-힣\\-<>/()]/g,"").toLowerCase();
+  return parts.replace(/\s+/g,"-").replace(/[^0-9A-Za-z가-힣\-<>/()]/g,"").toLowerCase();
 }
 
 function escapeHtml(s){
-  return String(s).replace(/[&<>\"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#39;" }[m]));
 }
 </script>
 </body>
