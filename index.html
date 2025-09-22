@@ -10,6 +10,26 @@
       --kt-dark:#111827;
       --kt-gray:#6b7280;
       --radius:16px;
+
+    #required {
+      list-style: none;
+      margin: 8px 0 0 0;   /* 기존 ul의 좌측 여백 초기화 */
+      padding-left: 0;     /* 브라우저 기본 패딩 제거 */
+    }
+    #required li::marker { content: ""; }
+
+    #visitor .visitor ul {
+      list-style: none;     /* 불릿 제거 */
+      margin: 8px 0 0 0;    /* 좌측 여백 초기화 (공통 ul 규칙 덮어쓰기) */
+      padding-left: 0;      /* 브라우저 기본 패딩 제거 */
+    }
+    #visitor .visitor li::marker {
+      content: "";
+    }
+    #visitor .visitor li {
+      margin: 4px 0;
+    }
+      
     }
     *{box-sizing:border-box}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Malgun Gothic,sans-serif;margin:0;background:#f8fafc;color:#0f172a}
@@ -37,26 +57,9 @@
     .banner{display:flex;align-items:center;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:10px;border-radius:12px;margin-bottom:12px}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#f1f5f9;border:1px solid #e2e8f0;border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:12px}
   
-    /* Fixed notes list styling */
-    .fixed-note{margin:8px 0 0 18px}
-    .fixed-note li{margin:4px 0}
-    /* Remove bullets for required & visitor lists */
-    #required{list-style:none;margin:8px 0 0 0;padding-left:0}
-    #required li::marker{content:""}
-    #visitor .visitor ul{list-style:none;margin:8px 0 0 0;padding-left:0}
-    #visitor .visitor li::marker{content:""}
-    /* SMS box */
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
-
-
-    /* Guide panel styling */
-    .guide{display:none;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;
-      border-radius:10px;padding:10px;margin-top:6px;font-size:13px}
-    .li-row{display:flex;align-items:center;gap:8px}
-    .btn-info{background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;padding:2px 8px;border-radius:999px;font-size:12px;cursor:pointer}
-    .btn-info:hover{filter:brightness(0.98)}
-    .guide h4{margin:0 0 6px 0;font-size:14px}
-    .guide .kv{margin:2px 0}
+.fixed-note { margin:8px 0 0 18px; }
+.fixed-note li { margin:4px 0; }
+.mono { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; white-space: pre-wrap; }
 
 </style>
 </head>
@@ -98,23 +101,30 @@
     </div>
 
     
-    <div id="sms" class="card" style="display:none">
-      <h2>고객 안내 문자 자동완성</h2>
-      <textarea id="smsText" class="mono" readonly placeholder="선택한 유형에 따라 자동 생성됩니다."></textarea>
-      <div style="margin-top:10px">
-        <button class="btn" id="copySms">문구 복사</button>
+<div id="sms" class="card" style="display:none">
+  <h2>고객 안내 문자 자동완성</h2>
+  <textarea id="smsText" readonly class="mono" placeholder="선택한 유형에 따라 자동 생성됩니다."></textarea>
+  <div style="margin-top:10px">
+    <button class="btn" id="copySms">문구 복사</button>
+  </div>
+  <div class="hint">복사 후 문자(SMS/MMS)에 붙여넣어 고객에게 보내세요.</div>
+</div>
+
+<div class="card">
+  <h2>추가 전달사항</h2>
+  <ol class="fixed-note">
+    <li>제출 서류는 모두 "발급 3개월 이내"만 인정</li>
+    <li>열람용 파일이 아닌, "출력해온 발급 서류"만 인정</li>
+  </ol>
+  <div class="hint">이 텍스트는 index.html 코드에서 직접 수정할 수 있습니다.</div>
+</div>
+
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn" id="save">저장</button>
+        <button class="btn" style="background:#64748b" id="reset">초기화</button>
       </div>
-      <div class="hint">내용을 복사해 문자(SMS/MMS)로 붙여넣어 보내세요.</div>
     </div>
 
-    <div class="card">
-      <h2>추가 전달사항</h2>
-      <ol class="fixed-note">
-        <li>제출 서류는 모두 “발급 3개월 이내”만 인정</li>
-        <li>열람용 파일이 아닌, “출력해온 발급 서류”만 인정</li>
-      </ol>
-      <div class="hint">고정 멘트는 코드에서 수정 가능합니다. (index.html 내 고정 텍스트)</div>
-    </div>
     <div class="footer">v1 · 데이터 파일: <code>data.json</code> · GitHub Pages에서 그대로 동작</div>
   </main>
 
@@ -124,28 +134,15 @@
       selected:{ a:'', b:'', c:'' }
     };
 
-    
-    
     async function loadData(){
-      const [resData, resGuide] = await Promise.all([
-        fetch('data.json',{cache:'no-store'}),
-        fetch('docs_guide.json',{cache:'no-store'}).catch(()=>null)
-      ]);
-      state.data = await resData.json();
-      state.guides = await resGuide.json() ;
-      // Build guides index for fuzzy-ish matching
-      state.guidesIndex = {};
-      const norm = s => (s||'').toString().replace(/\s+/g,'').replace(/[()]/g,'').toLowerCase();
-      Object.keys(state.guides||{}).forEach(k=>{ state.guidesIndex[norm(k)] = state.guides[k]; });
-
+      const res = await fetch('data.json',{cache:'no-store'});
+      state.data = await res.json();
       // ① 채우기
       const type1 = document.getElementById('type1');
       state.data.options['업무처리유형'].forEach(v=>{
         const o=document.createElement('option'); o.value=v; o.textContent=v; type1.appendChild(o);
       });
     }
-
-
 
     function fillDetail1(){
       const t1 = document.getElementById('type1').value;
@@ -182,14 +179,8 @@
       if(!rec){ clearResult(); return; }
       const result = document.getElementById('result');
       const ul = document.getElementById('required'); ul.innerHTML='';
-      (rec['필수서류'] || []).forEach((item,idx)=>{
-        const li=document.createElement('li');
-        const row=document.createElement('div'); row.className='li-row';
-        const span=document.createElement('span'); span.className='li-text'; span.textContent=item; row.appendChild(span);
-        const btn=document.createElement('button'); btn.className='btn-info'; btn.type='button'; btn.textContent='안내'; row.appendChild(btn);
-        li.appendChild(row);
-        const g=document.createElement('div'); g.className='guide'; li.appendChild(g);
-        ul.appendChild(li);
+      (rec['필수서류'] || []).forEach(item=>{
+        const li=document.createElement('li'); li.textContent=item; ul.appendChild(li);
       });
 
       const visitorWrap = document.getElementById('visitor'); visitorWrap.innerHTML='';
@@ -213,99 +204,54 @@
       renderSms(null);
     }
 
-    
-    function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
-
-    function buildSms(rec){
-      const req = Array.isArray(rec['필수서류']) ? rec['필수서류'] : [];
-      const byv = rec['방문자별추가서류'] || {};
-      const lines = [];
-      lines.push('고객님 내방 시 준비 서류:');
-      uniq(req).forEach(item=> lines.push(item));
-      Object.keys(byv).forEach(section=>{
-        const vals = uniq(byv[section] || []);
-        if(!vals.length) return;
-        lines.push(`[${section}] ` + vals.join(', '));
-      });
-      lines.push('');
-      lines.push('서류가 미비할 경우 재방문이 필요할 수 있습니다.');
-      lines.push('감사합니다.');
-      return lines.join('
-');
-    }
-
-    function renderSms(rec){
-      const box = document.getElementById('sms');
-      const ta  = document.getElementById('smsText');
-      if(!rec){ ta.value=''; box.style.display='none'; return; }
-      ta.value = buildSms(rec);
-      box.style.display='block';
-    }
+    // Notes local storage
+    const NOTES_KEY='kt-doc-notes';
+    function loadNotes(){ document.getElementById('notes').value = localStorage.getItem(NOTES_KEY)||''; }
+    function saveNotes(){ localStorage.setItem(NOTES_KEY, document.getElementById('notes').value); alert('저장되었습니다.'); }
+    function resetNotes(){ if(confirm('메모를 모두 삭제할까요?')){ localStorage.removeItem(NOTES_KEY); loadNotes(); } }
 
     
-    function normDoc(s){ return (s||'').toString().replace(/\s+/g,'').replace(/[()]/g,'').toLowerCase(); }
-
-    function extractDocs(text){
-      // split by common joiners: +, /, ·, , 
-      const parts = (text||'').split(/[+\/·,]/).map(s=>s.trim()).filter(Boolean);
-      return parts.length ? parts : [text];
-    }
-
-    function findGuideByName(name){
-      const g = state.guidesIndex?.[normDoc(name)];
-      return g || null;
-    }
-
-    function guideHtml(name, g){
-      if(!g) return '';
-      const lines = [];
-      lines.push(`<h4>${name}</h4>`);
-      if(g['요약']) lines.push(`<div class="kv">- 요약: ${g['요약']}</div>`);
-      if(g['경로'] && Array.isArray(g['경로'])) lines.push(`<div class="kv">- 경로: ${g['경로'].join(' > ')}</div>`);
-      if(g['준비물'] && Array.isArray(g['준비물'])) lines.push(`<div class="kv">- 준비물: ${g['준비물'].join(', ')}</div>`);
-      if(g['수수료']) lines.push(`<div class="kv">- 수수료: ${g['수수료']}</div>`);
-      if(g['비고']) lines.push(`<div class="kv">- 비고: ${g['비고']}</div>`);
-      return lines.join('
+function buildSms(rec){
+  const req = Array.isArray(rec['필수서류']) ? rec['필수서류'] : [];
+  const byv = rec['방문자별추가서류'] || {};
+  const lines = [];
+  lines.push('고객님께서 내방 시 준비해주셔야 하는 서류는 아래와 같습니다.');
+  req.forEach(item=> lines.push(item));
+  Object.keys(byv).forEach(section=>{
+    (byv[section]||[]).forEach(i=> lines.push(section + ': ' + i));
+  });
+  lines.push('');
+  lines.push('서류가 전부 준비되지 않을 경우, 매장을 다시 방문 후 제출해주셔야 합니다.');
+  lines.push('잊지 말고, 모두 구비해주시면 감사하겠습니다 :)');
+  return lines.join('
 ');
-    }
+}
 
-    function buildGuideFromLine(line){
-      const docs = extractDocs(line);
-      const blocks = [];
-      docs.forEach(d=>{
-        const g = findGuideByName(d);
-        if(g) blocks.push(guideHtml(d, g));
-      });
-      if(!blocks.length) return '<em>안내가 아직 없습니다. docs_guide.json에 항목을 추가하세요.</em>';
-      return blocks.join('<hr style="border:none;border-top:1px dashed #e2e8f0;margin:8px 0">');
-    }
+function renderSms(rec){
+  const box = document.getElementById('sms');
+  const ta = document.getElementById('smsText');
+  if(!rec){ ta.value=''; box.style.display='none'; return; }
+  ta.value = buildSms(rec);
+  box.style.display='block';
+}
 
-    // wire
+// wire
     window.addEventListener('DOMContentLoaded', ()=>{
-      loadData();
+      loadData().then(loadNotes);
       document.getElementById('type1').addEventListener('change', fillDetail1);
       document.getElementById('type2').addEventListener('change', fillDetail2);
       document.getElementById('type3').addEventListener('change', renderResult);
-
-      // 안내 버튼 토글 (이벤트 위임)
-      document.getElementById('result').addEventListener('click', (e)=>{
-        if(e.target && e.target.matches('.btn-info')){
-          const li = e.target.closest('li');
-          const text = li.querySelector('.li-text')?.textContent || '';
-          const g = li.querySelector('.guide');
-          g.innerHTML = buildGuideFromLine(text);
-          g.style.display = (g.style.display==='block') ? 'none' : 'block';
-        }
-      });
       document.getElementById('copySms').addEventListener('click', async ()=>{
         try{
           await navigator.clipboard.writeText(document.getElementById('smsText').value);
-          alert('복사되었습니다. 문자 앱에 붙여넣기 하세요.');
+          alert('복사되었습니다. 문자 앱에 붙여넣어 주세요.');
         }catch(e){
-          alert('복사를 실패했습니다. 텍스트를 직접 선택해 복사하세요.');
+          alert('복사 실패. 텍스트를 직접 선택해 복사하세요.');
         }
       });
-});
+      document.getElementById('save').addEventListener('click', saveNotes);
+      document.getElementById('reset').addEventListener('click', resetNotes);
+    });
   </script>
 </body>
 </html>
