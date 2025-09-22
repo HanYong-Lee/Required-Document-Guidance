@@ -132,7 +132,7 @@
         fetch('docs_guide.json',{cache:'no-store'}).catch(()=>null)
       ]);
       state.data = await resData.json();
-      state.guides = await resGuide.json() : {};
+      state.guides = await resGuide.json() ;
       // Build guides index for fuzzy-ish matching
       state.guidesIndex = {};
       const norm = s => (s||'').toString().replace(/\s+/g,'').replace(/[()]/g,'').toLowerCase();
