@@ -1,254 +1,321 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>구비서류 Finder – KT 전용 (Cascading)</title>
-  <link rel="stylesheet" href="./styles.css">
+  <title>업무유형별 구비서류 안내 | KT 매장용</title>
+  <style>
+    :root{
+      --kt-blue:#1f8cff;
+      --kt-dark:#111827;
+      --kt-gray:#6b7280;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Malgun Gothic,sans-serif;margin:0;background:#f8fafc;color:#0f172a}
+    header{background:linear-gradient(90deg,var(--kt-blue),#3b82f6);color:#fff;padding:20px 16px}
+    header h1{margin:0 0 6px 0;font-size:20px}
+    header p{margin:0;font-size:13px;opacity:.9}
+    main{max-width:960px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border-radius:var(--radius);box-shadow:0 6px 24px rgba(2,6,23,.07);padding:16px;margin-bottom:16px}
+    .row{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:720px){.row{grid-template-columns:repeat(3,1fr)}}
+    label{font-size:12px;color:#334155;margin-bottom:4px;display:block}
+    select{width:100%;padding:12px 10px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:#fff}
+    select:disabled{background:#f1f5f9;color:#94a3b8}
+    .pill{display:inline-block;background:#eef2ff;color:#3730a3;border-radius:999px;padding:4px 10px;font-size:12px;margin:0 6px 6px 0}
+    h2{font-size:16px;margin:0 0 8px 0}
+    ul{margin:8px 0 0 20px}
+    .muted{color:#64748b}
+    .grid-2{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:720px){.grid-2{grid-template-columns:1fr 1fr}}
+    .visitor{border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
+    .footer{font-size:12px;color:#64748b;text-align:center;margin:24px 0}
+    .btn{appearance:none;border:0;background:var(--kt-blue);color:#fff;border-radius:12px;padding:10px 14px;font-size:14px;cursor:pointer}
+    textarea{width:100%;min-height:100px;padding:12px;border:1px solid #e2e8f0;border-radius:12px;resize:vertical;font-size:14px}
+    .hint{font-size:12px;color:#64748b;margin-top:6px}
+    .banner{display:flex;align-items:center;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:10px;border-radius:12px;margin-bottom:12px}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#f1f5f9;border:1px solid #e2e8f0;border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:12px}
+  
+    /* Fixed notes list styling */
+    .fixed-note{margin:8px 0 0 18px}
+    .fixed-note li{margin:4px 0}
+    /* Remove bullets for required & visitor lists */
+    #required{list-style:none;margin:8px 0 0 0;padding-left:0}
+    #required li::marker{content:""}
+    #visitor .visitor ul{list-style:none;margin:8px 0 0 0;padding-left:0}
+    #visitor .visitor li::marker{content:""}
+    /* SMS box */
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
+
+
+    /* Guide panel styling */
+    .guide{display:none;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;
+      border-radius:10px;padding:10px;margin-top:6px;font-size:13px}
+    .li-row{display:flex;align-items:center;gap:8px}
+    .btn-info{background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;padding:2px 8px;border-radius:999px;font-size:12px;cursor:pointer}
+    .btn-info:hover{filter:brightness(0.98)}
+    .guide h4{margin:0 0 6px 0;font-size:14px}
+    .guide .kv{margin:2px 0}
+
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>
-          <div class="title">휴대폰 개통 업무유형별 구비서류 Finder</div>
-          <p class="sub">KT 전용 테마 · <b>순차 선택(업무처리→상세→개통자→방문자) 시 불가능한 선택지 자동 제거</b> · 복사·인쇄 지원</p>
-        </div>
-      </div>
-      <nav class="nav">
-        <a href="./index.html" class="active">검색</a>
-        <a href="./admin.html">데이터 업로더</a>
-      </nav>
+  <header>
+    <h1>업무유형별 구비서류 안내</h1>
+    <p>KT 매장 직원 전용 · 단계별 드롭다운으로 필요한 서류를 빠르게 확인하세요.</p>
+  </header>
+
+  <main>
+    <div class="card banner">
+      <div><strong>사용법</strong> ① 업무처리 유형 → ② 상세유형1 → ③ 상세유형2 순서로 선택하세요. 선택에 따라 다음 옵션이 자동으로 좁혀집니다.</div>
     </div>
 
-    <div class="card p4">
-      <div class="grid grid-5">
+    <div class="card">
+      <div class="row">
         <div>
-          <label>검색어</label>
-          <input id="q" placeholder="예: 미성년자 / 인감증명서 / 명의변경">
-        </div>
-        <div>
-          <label>업무처리 유형</label>
-          <select id="type"><option value="">전체</option></select>
+          <label for="type1">① 업무처리 유형</label>
+          <select id="type1"><option value="">선택하세요</option></select>
         </div>
         <div>
-          <label>상세유형</label>
-          <select id="subtype" disabled><option value="">전체</option></select>
+          <label for="type2">② 상세유형 1</label>
+          <select id="type2" disabled><option value="">먼저 ①을 선택</option></select>
         </div>
         <div>
-          <label>개통자</label>
-          <select id="opener" disabled><option value="">전체</option></select>
+          <label for="type3">③ 상세유형 2</label>
+          <select id="type3" disabled><option value="">먼저 ②를 선택</option></select>
         </div>
-        <div>
-          <label>방문자</label>
-          <select id="visitor" disabled><option value="">전체</option></select>
-        </div>
-        <div class="row" style="grid-column:1/-1">
-          <button class="btn" id="reset">초기화</button>
-          <span class="small">검색 결과: <b id="count">0</b>건</span>
-        </div>
+      </div>
+      <div class="hint">키보드로도 사용 가능: <span class="kbd">Alt</span> + <span class="kbd">↓</span> 로 펼치기</div>
+    </div>
+
+    <div id="result" class="card" style="display:none">
+      <h2>필수 서류</h2>
+      <ul id="required"></ul>
+
+      <h2 style="margin-top:16px">방문자별 추가 서류</h2>
+      <div id="visitor" class="grid-2"></div>
+    </div>
+
+    
+    <div id="sms" class="card" style="display:none">
+      <h2>고객 안내 문자 자동완성</h2>
+      <textarea id="smsText" class="mono" readonly placeholder="선택한 유형에 따라 자동 생성됩니다."></textarea>
+      <div style="margin-top:10px">
+        <button class="btn" id="copySms">문구 복사</button>
+      </div>
+      <div class="hint">내용을 복사해 문자(SMS/MMS)로 붙여넣어 보내세요.</div>
+    </div>
+
+    <div class="card">
+      <h2>추가 전달사항</h2>
+      <ol class="fixed-note">
+        <li>제출 서류는 모두 “발급 3개월 이내”만 인정</li>
+        <li>열람용 파일이 아닌, “출력해온 발급 서류”만 인정</li>
+      </ol>
+      <div class="hint">고정 멘트는 코드에서 수정 가능합니다. (index.html 내 고정 텍스트)</div>
+    </div>
+<div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn" id="save">저장</button>
+        <button class="btn" style="background:#64748b" id="reset">초기화</button>
       </div>
     </div>
 
-    <div class="results" id="results" style="margin-top:12px"></div>
-    <p id="empty" class="small" style="display:none;margin-top:8px">조건에 맞는 항목이 없습니다. 필터 또는 검색어를 조정해보세요.</p>
+    <div class="footer">v1 · 데이터 파일: <code>data.json</code> · GitHub Pages에서 그대로 동작</div>
+  </main>
 
-    <div class="footer">© KT M&S 내부 활용. 무단 배포 금지.</div>
-  </div>
+  <script>
+    const state = {
+      data:null,
+      selected:{ a:'', b:'', c:'' }
+    };
 
-<script>
-const $ = (sel) => document.querySelector(sel);
-const els = {
-  q: $("#q"),
-  type: $("#type"),
-  subtype: $("#subtype"),
-  opener: $("#opener"),
-  visitor: $("#visitor"),
-  results: $("#results"),
-  count: $("#count"),
-  empty: $("#empty"),
-  reset: $("#reset"),
-};
+    
+    async function loadData(){
+      const [resData, resGuide] = await Promise.all([
+        fetch('data.json',{cache:'no-store'}),
+        fetch('docs_guide.json',{cache:'no-store'}).catch(()=>null)
+      ]);
+      state.data = await resData.json();
+      state.guides = resGuide ? await resGuide.json() : {};
+      // Build guides index for fuzzy-ish matching
+      state.guidesIndex = {};
+      const norm = s => (s||'').toString().replace(/\s+/g,'').replace(/[()]/g,'').toLowerCase();
+      Object.keys(state.guides||{}).forEach(k=>{ state.guidesIndex[norm(k)] = state.guides[k]; });
 
-let DATA = [];
+      // ① 채우기
+      const type1 = document.getElementById('type1');
+      state.data.options['업무처리유형'].forEach(v=>{
+        const o=document.createElement('option'); o.value=v; o.textContent=v; type1.appendChild(o);
+      });
+    }
+);
+      state.data = await res.json();
+      // ① 채우기
+      const type1 = document.getElementById('type1');
+      state.data.options['업무처리유형'].forEach(v=>{
+        const o=document.createElement('option'); o.value=v; o.textContent=v; type1.appendChild(o);
+      });
+    }
 
-fetch("./device_documents_db.json")
-  .then(r => r.json())
-  .then(j => { DATA = j; initCascading(); render(); })
-  .catch(() => { els.results.innerHTML = "<p>데이터를 불러오지 못했습니다.</p>"; });
+    function fillDetail1(){
+      const t1 = document.getElementById('type1').value;
+      const type2 = document.getElementById('type2');
+      type2.innerHTML = '<option value="">선택하세요</option>';
+      const map = state.data.options['상세유형1'][t1] || [];
+      map.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; type2.appendChild(o); });
+      type2.disabled = !map.length;
+      // reset ③
+      const type3 = document.getElementById('type3');
+      type3.innerHTML = '<option value="">먼저 ②를 선택</option>';
+      type3.disabled = true;
+      clearResult();
+    }
 
-function uniqueSorted(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); }
+    function fillDetail2(){
+      const t1 = document.getElementById('type1').value;
+      const t2 = document.getElementById('type2').value;
+      const type3 = document.getElementById('type3');
+      type3.innerHTML = '<option value="">선택하세요</option>';
+      const key = `${t1}||${t2}`;
+      const map = state.data.options['상세유형2'][key] || [];
+      map.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; type3.appendChild(o); });
+      type3.disabled = !map.length;
+      clearResult();
+    }
 
-function initCascading(){
-  // 초기: type만 활성화
-  populate(els.type, uniqueSorted(DATA.map(r=>String(r["업무처리 유형"]||""))), "");
-  setEnabled(els.subtype, false);
-  setEnabled(els.opener, false);
-  setEnabled(els.visitor, false);
+    function renderResult(){
+      const t1 = document.getElementById('type1').value;
+      const t2 = document.getElementById('type2').value;
+      const t3 = document.getElementById('type3').value;
+      if(!t1 || !t2 || !t3){ clearResult(); return; }
+      const rec = state.data.records.find(r=> r['업무처리유형']===t1 && r['상세유형1']===t2 && r['상세유형2']===t3 );
+      if(!rec){ clearResult(); return; }
+      const result = document.getElementById('result');
+      const ul = document.getElementById('required'); ul.innerHTML='';
+      (rec['필수서류'] || []).forEach((item,idx)=>{
+        const li=document.createElement('li');
+        const row=document.createElement('div'); row.className='li-row';
+        const span=document.createElement('span'); span.className='li-text'; span.textContent=item; row.appendChild(span);
+        const btn=document.createElement('button'); btn.className='btn-info'; btn.type='button'; btn.textContent='안내'; row.appendChild(btn);
+        li.appendChild(row);
+        const g=document.createElement('div'); g.className='guide'; li.appendChild(g);
+        ul.appendChild(li);
+      });
 
-  els.type.addEventListener("change", onTypeChange);
-  els.subtype.addEventListener("change", onSubtypeChange);
-  els.opener.addEventListener("change", onOpenerChange);
-  els.visitor.addEventListener("change", ()=>render());
+      const visitorWrap = document.getElementById('visitor'); visitorWrap.innerHTML='';
+      const byVisitor = rec['방문자별추가서류'] || {};
+      Object.keys(byVisitor).forEach(section=>{
+        const box = document.createElement('div'); box.className='visitor';
+        const title = document.createElement('div'); title.innerHTML = `<span class="pill">${section}</span>`;
+        const l = document.createElement('ul');
+        byVisitor[section].forEach(i=>{ const li=document.createElement('li'); li.textContent=i; l.appendChild(li); });
+        box.appendChild(title); box.appendChild(l); visitorWrap.appendChild(box);
+      });
 
-  els.q.addEventListener("input", ()=>render());
+      result.style.display='block';
+      renderSms(rec);
+    }
 
-  els.reset.addEventListener("click", ()=>{
-    els.q.value=""; 
-    setValue(els.type,"");
-    onTypeChange(); // 이 안에서 하위 초기화
-    render();
-  });
-}
+    function clearResult(){
+      document.getElementById('result').style.display='none';
+      document.getElementById('required').innerHTML='';
+      document.getElementById('visitor').innerHTML='';
+      renderSms(null);
+    }
 
-function onTypeChange(){
-  const type = els.type.value;
-  // 상세유형 옵션 재구성
-  const subtypes = uniqueSorted(DATA
-    .filter(r => !type || String(r["업무처리 유형"])===type)
-    .map(r => String(r["상세유형"]||"")));
-  populate(els.subtype, subtypes, "");
-  setEnabled(els.subtype, true);
+    
+    function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
 
-  // 하위 단계 초기화/비활성화
-  populate(els.opener, [], "");
-  setEnabled(els.opener, false);
-  populate(els.visitor, [], "");
-  setEnabled(els.visitor, false);
-  render();
-}
+    function buildSms(rec){
+      const req = Array.isArray(rec['필수서류']) ? rec['필수서류'] : [];
+      const byv = rec['방문자별추가서류'] || {};
+      const lines = [];
+      lines.push('고객님 내방 시 준비 서류:');
+      uniq(req).forEach(item=> lines.push(item));
+      Object.keys(byv).forEach(section=>{
+        const vals = uniq(byv[section] || []);
+        if(!vals.length) return;
+        lines.push(`[${section}] ` + vals.join(', '));
+      });
+      lines.push('');
+      lines.push('서류가 미비할 경우 재방문이 필요할 수 있습니다.');
+      lines.push('감사합니다.');
+      return lines.join('
+');
+    }
 
-function onSubtypeChange(){
-  const type = els.type.value;
-  const subtype = els.subtype.value;
-  // 개통자 옵션 재구성
-  const openers = uniqueSorted(DATA
-    .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype))
-    .map(r => String(r["개통자"]||"")));
-  populate(els.opener, openers, "");
-  setEnabled(els.opener, true);
+    function renderSms(rec){
+      const box = document.getElementById('sms');
+      const ta  = document.getElementById('smsText');
+      if(!rec){ ta.value=''; box.style.display='none'; return; }
+      ta.value = buildSms(rec);
+      box.style.display='block';
+    }
 
-  // 방문자 초기화/비활성화
-  populate(els.visitor, [], "");
-  setEnabled(els.visitor, false);
-  render();
-}
+    
+    function normDoc(s){ return (s||'').toString().replace(/\s+/g,'').replace(/[()]/g,'').toLowerCase(); }
 
-function onOpenerChange(){
-  const type = els.type.value;
-  const subtype = els.subtype.value;
-  const opener = els.opener.value;
-  // 방문자 옵션 재구성
-  const visitors = uniqueSorted(DATA
-    .filter(r => (!type || String(r["업무처리 유형"])===type) && (!subtype || String(r["상세유형"])===subtype) && (!opener || String(r["개통자"])===opener))
-    .map(r => String(r["방문자"]||"")));
-  populate(els.visitor, visitors, "");
-  setEnabled(els.visitor, true);
-  render();
-}
+    function extractDocs(text){
+      // split by common joiners: +, /, ·, , 
+      const parts = (text||'').split(/[+\/·,]/).map(s=>s.trim()).filter(Boolean);
+      return parts.length ? parts : [text];
+    }
 
-function setEnabled(select, enabled){
-  select.disabled = !enabled;
-  if(!enabled) setValue(select, "");
-}
+    function findGuideByName(name){
+      const g = state.guidesIndex?.[normDoc(name)];
+      return g || null;
+    }
 
-function setValue(select, val){
-  select.value = val;
-}
+    function guideHtml(name, g){
+      if(!g) return '';
+      const lines = [];
+      lines.push(`<h4>${name}</h4>`);
+      if(g['요약']) lines.push(`<div class="kv">- 요약: ${g['요약']}</div>`);
+      if(g['경로'] && Array.isArray(g['경로'])) lines.push(`<div class="kv">- 경로: ${g['경로'].join(' > ')}</div>`);
+      if(g['준비물'] && Array.isArray(g['준비물'])) lines.push(`<div class="kv">- 준비물: ${g['준비물'].join(', ')}</div>`);
+      if(g['수수료']) lines.push(`<div class="kv">- 수수료: ${g['수수료']}</div>`);
+      if(g['비고']) lines.push(`<div class="kv">- 비고: ${g['비고']}</div>`);
+      return lines.join('');
+    }
 
-function populate(select, options, keepValue){
-  const current = select.value;
-  const want = keepValue || current;
-  select.innerHTML = "<option value=''>전체</option>" + options.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
-  // 선택값이 아직 유효하면 유지
-  if(want && options.includes(want)) select.value = want;
-  else select.value = "";
-}
+    function buildGuideFromLine(line){
+      const docs = extractDocs(line);
+      const blocks = [];
+      docs.forEach(d=>{
+        const g = findGuideByName(d);
+        if(g) blocks.push(guideHtml(d, g));
+      });
+      if(!blocks.length) return '<em>안내가 아직 없습니다. docs_guide.json에 항목을 추가하세요.</em>';
+      return blocks.join('<hr style="border:none;border-top:1px dashed #e2e8f0;margin:8px 0">');
+    }
 
-function render(){
-  const query = (els.q.value || "").trim().toLowerCase();
-  const type = els.type.value, subtype = els.subtype.value, opener = els.opener.value, visitor = els.visitor.value;
+    // wire
+    window.addEventListener('DOMContentLoaded', ()=>{
+      loadData();
+      document.getElementById('type1').addEventListener('change', fillDetail1);
+      document.getElementById('type2').addEventListener('change', fillDetail2);
+      document.getElementById('type3').addEventListener('change', renderResult);
 
-  const filtered = DATA.filter(r=>{
-    const t = !type || String(r["업무처리 유형"])===type;
-    const s = !subtype || String(r["상세유형"])===subtype;
-    const o = !opener || String(r["개통자"])===opener;
-    const v = !visitor || String(r["방문자"])===visitor;
-    const text = (`${r.id} ${r["업무처리 유형"]} ${r["상세유형"]} ${r["개통자"]} ${r["방문자"]} ${r["구비서류(필수)"]} ${r["구비서류(상황별)"]}`).toLowerCase();
-    const q = !query || text.includes(query);
-    return t&&s&&o&&v&&q;
-  });
-
-  els.count.textContent = filtered.length;
-  els.results.innerHTML = "";
-  els.empty.style.display = filtered.length ? "none" : "block";
-
-  filtered.forEach(rec=>{
-    const card = document.createElement("div");
-    card.className = "card p4";
-    card.innerHTML = `
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <div class="row">
-          <span class="badge">${rec["업무처리 유형"]}</span>
-          <span class="badge">${rec["상세유형"]}</span>
-          <span class="badge">개통자:${rec["개통자"]}</span>
-          <span class="badge">방문자:${rec["방문자"]}</span>
-        </div>
-        <div class="row">
-          <button class="btn js-copy">복사</button>
-          <button class="btn js-print">인쇄</button>
-        </div>
-      </div>
-      <section>
-        <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (필수)</h3>
-        <pre>${escapeHtml(rec["구비서류(필수)"]||"")}</pre>
-      </section>
-      <section>
-        <h3 style="margin:12px 0 6px;font-size:16px">구비서류 (상황별)</h3>
-        <pre>${escapeHtml(rec["구비서류(상황별)"]||"")}</pre>
-      </section>
-      <div class="small">ID: ${rec.id}</div>
-    `;
-    card.querySelector(".js-copy").addEventListener("click", ()=>copyRec(rec));
-    card.querySelector(".js-print").addEventListener("click", ()=>printRec(rec));
-    els.results.appendChild(card);
-  });
-}
-
-function copyRec(rec){
-  const txt = `[#${rec.id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
-개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
-
-[필수] ${rec["구비서류(필수)"]}
-[상황별] ${rec["구비서류(상황별)"]}`;
-  if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt);
-  } else {
-    const ta = document.createElement("textarea");
-    ta.value = txt; document.body.appendChild(ta);
-    ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-  }
-}
-
-function printRec(rec){
-  const w = window.open("", "printwin");
-  if(!w) return;
-  w.document.write(`<pre style="font-family:ui-monospace,Menlo,Consolas;white-space:pre-wrap;line-height:1.5">${escapeHtml(
-`[#${rec.id}] ${rec["업무처리 유형"]} / ${rec["상세유형"]}
-개통자: ${rec["개통자"]} | 방문자: ${rec["방문자"]}
-
-[필수]
-${rec["구비서류(필수)"]}
-
-[상황별]
-${rec["구비서류(상황별)"]}`)}</pre>`);
-  w.document.close(); w.print();
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
-}
-</script>
+      // 안내 버튼 토글 (이벤트 위임)
+      document.getElementById('result').addEventListener('click', (e)=>{
+        if(e.target && e.target.matches('.btn-info')){
+          const li = e.target.closest('li');
+          const text = li.querySelector('.li-text')?.textContent || '';
+          const g = li.querySelector('.guide');
+          g.innerHTML = buildGuideFromLine(text);
+          g.style.display = (g.style.display==='block') ? 'none' : 'block';
+        }
+      });
+      document.getElementById('copySms').addEventListener('click', async ()=>{
+        try{
+          await navigator.clipboard.writeText(document.getElementById('smsText').value);
+          alert('복사되었습니다. 문자 앱에 붙여넣기 하세요.');
+        }catch(e){
+          alert('복사를 실패했습니다. 텍스트를 직접 선택해 복사하세요.');
+        }
+      });
+});
+  </script>
 </body>
 </html>
