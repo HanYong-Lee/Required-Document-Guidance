@@ -115,12 +115,6 @@
       </ol>
       <div class="hint">고정 멘트는 코드에서 수정 가능합니다. (index.html 내 고정 텍스트)</div>
     </div>
-<div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn" id="save">저장</button>
-        <button class="btn" style="background:#64748b" id="reset">초기화</button>
-      </div>
-    </div>
-
     <div class="footer">v1 · 데이터 파일: <code>data.json</code> · GitHub Pages에서 그대로 동작</div>
   </main>
 
@@ -130,6 +124,7 @@
       selected:{ a:'', b:'', c:'' }
     };
 
+    
     
     async function loadData(){
       const [resData, resGuide] = await Promise.all([
@@ -149,14 +144,8 @@
         const o=document.createElement('option'); o.value=v; o.textContent=v; type1.appendChild(o);
       });
     }
-);
-      state.data = await res.json();
-      // ① 채우기
-      const type1 = document.getElementById('type1');
-      state.data.options['업무처리유형'].forEach(v=>{
-        const o=document.createElement('option'); o.value=v; o.textContent=v; type1.appendChild(o);
-      });
-    }
+
+
 
     function fillDetail1(){
       const t1 = document.getElementById('type1').value;
@@ -276,7 +265,8 @@
       if(g['준비물'] && Array.isArray(g['준비물'])) lines.push(`<div class="kv">- 준비물: ${g['준비물'].join(', ')}</div>`);
       if(g['수수료']) lines.push(`<div class="kv">- 수수료: ${g['수수료']}</div>`);
       if(g['비고']) lines.push(`<div class="kv">- 비고: ${g['비고']}</div>`);
-      return lines.join('');
+      return lines.join('
+');
     }
 
     function buildGuideFromLine(line){
