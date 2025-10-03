@@ -3,64 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>휴대폰 개통 업무유형별 구비서류 안내</title>
+    <title>휴대폰 개통 구비서류 안내</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📱 휴대폰 개통 업무유형별 구비서류 안내</h1>
+            <h1>📱 휴대폰 개통 구비서류 안내</h1>
             <p class="subtitle">매장 직원용 구비서류 조회 시스템</p>
         </header>
 
-        <main>
-            <div class="selection-panel">
-                <div class="form-group">
-                    <label for="업무처리유형">업무처리 유형</label>
-                    <select id="업무처리유형" class="form-select">
-                        <option value="">선택하세요</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="상세유형1">상세유형 1</label>
-                    <select id="상세유형1" class="form-select" disabled>
-                        <option value="">먼저 업무처리 유형을 선택하세요</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="상세유형2">상세유형 2</label>
-                    <select id="상세유형2" class="form-select" disabled>
-                        <option value="">먼저 상세유형 1을 선택하세요</option>
-                    </select>
-                </div>
+        <div class="selection-panel">
+            <div class="form-group">
+                <label for="nationality">고객 국적</label>
+                <select id="nationality" class="form-select">
+                    <option value="">선택하세요</option>
+                </select>
             </div>
 
-            <div id="result-panel" class="result-panel" style="display: none;">
-                <div class="result-section">
-                    <h2>📋 필수 서류</h2>
-                    <div id="필수서류" class="content-box"></div>
-                </div>
-
-                <div class="result-section">
-                    <h2>ℹ️ 상황별 안내사항</h2>
-                    <div id="상황별안내사항" class="content-box"></div>
-                </div>
-
-                <div class="result-section">
-                    <h2>💡 공통 전달사항</h2>
-                    <div id="공통전달사항" class="content-box"></div>
-                </div>
+            <div class="form-group">
+                <label for="businessType">업무처리 유형</label>
+                <select id="businessType" class="form-select" disabled>
+                    <option value="">선택하세요</option>
+                </select>
             </div>
 
-            <div id="no-result" class="no-result" style="display: none;">
-                <p>⚠️ 선택한 조건에 해당하는 데이터가 없습니다.</p>
+            <div class="form-group">
+                <label for="detailType1">상세유형 1</label>
+                <select id="detailType1" class="form-select" disabled>
+                    <option value="">선택하세요</option>
+                </select>
             </div>
-        </main>
+
+            <div class="form-group">
+                <label for="detailType2">상세유형 2</label>
+                <select id="detailType2" class="form-select" disabled>
+                    <option value="">선택하세요</option>
+                </select>
+            </div>
+
+            <button id="resetBtn" class="reset-btn">🔄 초기화</button>
+        </div>
+
+        <div id="resultPanel" class="result-panel" style="display: none;">
+            <div class="result-section">
+                <h2>📋 필수 서류</h2>
+                <div id="requiredDocs" class="content-box"></div>
+            </div>
+
+            <div class="result-section">
+                <h2>💡 상황별 안내사항</h2>
+                <div id="situationalInfo" class="content-box"></div>
+            </div>
+
+            <div class="result-section">
+                <h2>📢 공통 전달사항</h2>
+                <div id="commonInfo" class="content-box"></div>
+            </div>
+
+            <button id="printBtn" class="print-btn">🖨️ 인쇄하기</button>
+        </div>
 
         <footer>
-            <p>© 2025 휴대폰 개통 업무 지원 시스템</p>
+            <p>© 2025 휴대폰 개통 구비서류 안내 시스템</p>
         </footer>
     </div>
 

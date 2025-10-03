@@ -1,173 +1,151 @@
-// 전역 변수
 let data = {};
 
-// 페이지 로드 시 실행
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
-    initializeSelects();
-    setupEventListeners();
+// JSON 데이터 로드
+fetch('document_guide.json')
+    .then(response => response.json())
+    .then(jsonData => {
+        data = jsonData;
+        initializeNationality();
+    })
+    .catch(error => {
+        console.error('데이터 로드 실패:', error);
+        alert('데이터를 불러오는데 실패했습니다.');
+    });
+
+// 고객 국적 초기화
+function initializeNationality() {
+    const nationalitySelect = document.getElementById('nationality');
+    const nationalities = Object.keys(data);
+    
+    nationalities.forEach(nationality => {
+        const option = document.createElement('option');
+        option.value = nationality;
+        option.textContent = nationality;
+        nationalitySelect.appendChild(option);
+    });
+}
+
+// 고객 국적 선택 이벤트
+document.getElementById('nationality').addEventListener('change', function() {
+    const nationality = this.value;
+    const businessTypeSelect = document.getElementById('businessType');
+    const detailType1Select = document.getElementById('detailType1');
+    const detailType2Select = document.getElementById('detailType2');
+    
+    // 하위 선택 초기화
+    resetSelect(businessTypeSelect);
+    resetSelect(detailType1Select);
+    resetSelect(detailType2Select);
+    hideResult();
+    
+    if (nationality) {
+        const businessTypes = Object.keys(data[nationality]);
+        populateSelect(businessTypeSelect, businessTypes);
+        businessTypeSelect.disabled = false;
+    } else {
+        businessTypeSelect.disabled = true;
+    }
 });
 
-// JSON 데이터 로드
-async function loadData() {
-    try {
-        const response = await fetch('data.json');
-        data = await response.json();
-        console.log('데이터 로드 완료:', data);
-    } catch (error) {
-        console.error('데이터 로드 실패:', error);
-        alert('데이터를 불러오는데 실패했습니다. data.json 파일을 확인해주세요.');
-    }
-}
-
-// 초기 드롭다운 설정
-function initializeSelects() {
-    const 업무처리유형Select = document.getElementById('업무처리유형');
+// 업무처리 유형 선택 이벤트
+document.getElementById('businessType').addEventListener('change', function() {
+    const nationality = document.getElementById('nationality').value;
+    const businessType = this.value;
+    const detailType1Select = document.getElementById('detailType1');
+    const detailType2Select = document.getElementById('detailType2');
     
-    // 업무처리 유형 옵션 추가
-    Object.keys(data).forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = type;
-        업무처리유형Select.appendChild(option);
-    });
-}
-
-// 이벤트 리스너 설정
-function setupEventListeners() {
-    const 업무처리유형Select = document.getElementById('업무처리유형');
-    const 상세유형1Select = document.getElementById('상세유형1');
-    const 상세유형2Select = document.getElementById('상세유형2');
-
-    업무처리유형Select.addEventListener('change', (e) => {
-        handle업무처리유형Change(e.target.value);
-    });
-
-    상세유형1Select.addEventListener('change', (e) => {
-        handle상세유형1Change(e.target.value);
-    });
-
-    상세유형2Select.addEventListener('change', (e) => {
-        handle상세유형2Change(e.target.value);
-    });
-}
-
-// 업무처리 유형 변경 처리
-function handle업무처리유형Change(selectedValue) {
-    const 상세유형1Select = document.getElementById('상세유형1');
-    const 상세유형2Select = document.getElementById('상세유형2');
+    // 하위 선택 초기화
+    resetSelect(detailType1Select);
+    resetSelect(detailType2Select);
+    hideResult();
     
-    // 하위 드롭다운 초기화
-    상세유형1Select.innerHTML = '<option value="">선택하세요</option>';
-    상세유형2Select.innerHTML = '<option value="">먼저 상세유형 1을 선택하세요</option>';
-    상세유형2Select.disabled = true;
-    hideResults();
-
-    if (selectedValue && data[selectedValue]) {
-        상세유형1Select.disabled = false;
-        
-        // 상세유형1 옵션 추가
-        Object.keys(data[selectedValue]).sort().forEach(type => {
-            const option = document.createElement('option');
-            option.value = type;
-            option.textContent = type;
-            상세유형1Select.appendChild(option);
-        });
+    if (businessType) {
+        const detailTypes1 = Object.keys(data[nationality][businessType]);
+        populateSelect(detailType1Select, detailTypes1);
+        detailType1Select.disabled = false;
     } else {
-        상세유형1Select.disabled = true;
+        detailType1Select.disabled = true;
     }
-}
+});
 
-// 상세유형1 변경 처리
-function handle상세유형1Change(selectedValue) {
-    const 업무처리유형 = document.getElementById('업무처리유형').value;
-    const 상세유형2Select = document.getElementById('상세유형2');
+// 상세유형 1 선택 이벤트
+document.getElementById('detailType1').addEventListener('change', function() {
+    const nationality = document.getElementById('nationality').value;
+    const businessType = document.getElementById('businessType').value;
+    const detailType1 = this.value;
+    const detailType2Select = document.getElementById('detailType2');
     
-    // 상세유형2 초기화
-    상세유형2Select.innerHTML = '<option value="">선택하세요</option>';
-    hideResults();
-
-    if (selectedValue && data[업무처리유형] && data[업무처리유형][selectedValue]) {
-        상세유형2Select.disabled = false;
-        
-        // 상세유형2 옵션 추가
-        Object.keys(data[업무처리유형][selectedValue]).sort().forEach(type => {
-            const option = document.createElement('option');
-            option.value = type;
-            option.textContent = type;
-            상세유형2Select.appendChild(option);
-        });
+    // 하위 선택 초기화
+    resetSelect(detailType2Select);
+    hideResult();
+    
+    if (detailType1) {
+        const detailTypes2 = Object.keys(data[nationality][businessType][detailType1]);
+        populateSelect(detailType2Select, detailTypes2);
+        detailType2Select.disabled = false;
     } else {
-        상세유형2Select.disabled = true;
+        detailType2Select.disabled = true;
     }
+});
+
+// 상세유형 2 선택 이벤트
+document.getElementById('detailType2').addEventListener('change', function() {
+    const nationality = document.getElementById('nationality').value;
+    const businessType = document.getElementById('businessType').value;
+    const detailType1 = document.getElementById('detailType1').value;
+    const detailType2 = this.value;
+    
+    if (detailType2) {
+        const result = data[nationality][businessType][detailType1][detailType2];
+        displayResult(result);
+    } else {
+        hideResult();
+    }
+});
+
+// 선택 박스 초기화
+function resetSelect(selectElement) {
+    selectElement.innerHTML = '<option value="">선택하세요</option>';
+    selectElement.disabled = true;
 }
 
-// 상세유형2 변경 처리 및 결과 표시
-function handle상세유형2Change(selectedValue) {
-    const 업무처리유형 = document.getElementById('업무처리유형').value;
-    const 상세유형1 = document.getElementById('상세유형1').value;
-
-    if (selectedValue && data[업무처리유형] && data[업무처리유형][상세유형1] && data[업무처리유형][상세유형1][selectedValue]) {
-        const resultData = data[업무처리유형][상세유형1][selectedValue];
-        displayResults(resultData);
-    } else {
-        hideResults();
-    }
+// 선택 박스 채우기
+function populateSelect(selectElement, options) {
+    selectElement.innerHTML = '<option value="">선택하세요</option>';
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        selectElement.appendChild(optionElement);
+    });
 }
 
 // 결과 표시
-function displayResults(resultData) {
-    const resultPanel = document.getElementById('result-panel');
-    const noResult = document.getElementById('no-result');
+function displayResult(result) {
+    document.getElementById('requiredDocs').textContent = result['필수 서류'];
+    document.getElementById('situationalInfo').textContent = result['상황별 안내사항'];
+    document.getElementById('commonInfo').textContent = result['공통 전달사항'];
+    document.getElementById('resultPanel').style.display = 'block';
     
-    if (resultData && resultData.length > 0) {
-        // 첫 번째 항목의 데이터 사용 (중복 제거된 데이터)
-        const item = resultData[0];
-        
-        document.getElementById('필수서류').innerHTML = formatText(item['필수 서류']);
-        document.getElementById('상황별안내사항').innerHTML = formatText(item['상황별 안내사항']);
-        document.getElementById('공통전달사항').innerHTML = formatText(item['공통 전달사항']);
-        
-        resultPanel.style.display = 'block';
-        noResult.style.display = 'none';
-        
-        // 결과 패널로 스크롤
-        resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-        resultPanel.style.display = 'none';
-        noResult.style.display = 'block';
-    }
+    // 결과 패널로 스크롤
+    document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // 결과 숨기기
-function hideResults() {
-    document.getElementById('result-panel').style.display = 'none';
-    document.getElementById('no-result').style.display = 'none';
+function hideResult() {
+    document.getElementById('resultPanel').style.display = 'none';
 }
 
-// 텍스트 포맷팅 (줄바꿈 처리)
-function formatText(text) {
-    if (!text) return '<p style="color: #999;">정보 없음</p>';
-    
-    // 줄바꿈을 <br>로 변환하고, 번호가 있는 항목은 강조
-    return text
-        .split('\n')
-        .map(line => {
-            line = line.trim();
-            if (!line) return '';
-            
-            // 번호로 시작하는 줄 강조
-            if (/^\d+\./.test(line) || /^\d+\)/.test(line)) {
-                return `<p style="font-weight: 600; color: #333; margin-top: 10px;">${line}</p>`;
-            }
-            // 들여쓰기가 있는 줄
-            else if (line.startsWith('  ')) {
-                return `<p style="margin-left: 20px; color: #666;">${line}</p>`;
-            }
-            // 일반 줄
-            else {
-                return `<p>${line}</p>`;
-            }
-        })
-        .join('');
-}
+// 초기화 버튼
+document.getElementById('resetBtn').addEventListener('click', function() {
+    document.getElementById('nationality').value = '';
+    resetSelect(document.getElementById('businessType'));
+    resetSelect(document.getElementById('detailType1'));
+    resetSelect(document.getElementById('detailType2'));
+    hideResult();
+});
+
+// 인쇄 버튼
+document.getElementById('printBtn').addEventListener('click', function() {
+    window.print();
+});
