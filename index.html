@@ -1,300 +1,69 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>업무유형별 구비서류 안내 | KT 매장용</title>
-  <style>
-    :root{
-      --kt-blue:#1f8cff;
-      --kt-dark:#111827;
-      --kt-gray:#6b7280;
-      --radius:16px;
-    }
-    #required {
-      list-style: none;
-      margin: 8px 0 0 0;   /* 기존 ul의 좌측 여백 초기화 */
-      padding-left: 0;     /* 브라우저 기본 패딩 제거 */
-    }
-    #required li::marker { content: ""; }
-
-    #visitor .visitor ul {
-      list-style: none;     /* 불릿 제거 */
-      margin: 8px 0 0 0;    /* 좌측 여백 초기화 (공통 ul 규칙 덮어쓰기) */
-      padding-left: 0;      /* 브라우저 기본 패딩 제거 */
-    }
-    #visitor .visitor li::marker {
-      content: "";
-    }
-    #visitor .visitor li {
-      margin: 4px 0;
-    
-    .sep{border:0;border-top:1px solid #e2e8f0;margin:12px 0}
-    #msg{margin-top:8px}
-    }
-    
-    
-    
-    *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Malgun Gothic,sans-serif;margin:0;background:#f8fafc;color:#0f172a}
-    header{background:linear-gradient(90deg,var(--kt-blue),#3b82f6);color:#fff;padding:20px 16px}
-    header h1{margin:0 0 6px 0;font-size:20px}
-    header p{margin:0;font-size:13px;opacity:.9}
-    main{max-width:960px;margin:24px auto;padding:0 16px}
-    .card{background:#fff;border-radius:var(--radius);box-shadow:0 6px 24px rgba(2,6,23,.07);padding:16px;margin-bottom:16px}
-    .row{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:720px){.row{grid-template-columns:repeat(3,1fr)}}
-    label{font-size:12px;color:#334155;margin-bottom:4px;display:block}
-    select{width:100%;padding:12px 10px;border:1px solid #e2e8f0;border-radius:12px;font-size:14px;background:#fff}
-    select:disabled{background:#f1f5f9;color:#94a3b8}
-    .pill{display:inline-block;background:#eef2ff;color:#3730a3;border-radius:999px;padding:4px 10px;font-size:12px;margin:0 6px 6px 0}
-    h2{font-size:16px;margin:0 0 8px 0}
-    ul{margin:8px 0 0 20px}
-    .muted{color:#64748b}
-    .grid-2{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:720px){.grid-2{grid-template-columns:1fr 1fr}}
-    .visitor{border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
-    .footer{font-size:12px;color:#64748b;text-align:center;margin:24px 0}
-    .btn{appearance:none;border:0;background:var(--kt-blue);color:#fff;border-radius:12px;padding:10px 14px;font-size:14px;cursor:pointer}
-    textarea{width:100%;min-height:100px;padding:12px;border:1px solid #e2e8f0;border-radius:12px;resize:vertical;font-size:14px}
-    .hint{font-size:12px;color:#64748b;margin-top:6px}
-    .banner{display:flex;align-items:center;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:10px;border-radius:12px;margin-bottom:12px}
-    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#f1f5f9;border:1px solid #e2e8f0;border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:12px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>휴대폰 개통 업무유형별 구비서류 안내</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>업무유형별 구비서류 안내</h1>
-    <p>KT 매장 직원 전용 · 단계별 드롭다운으로 필요한 서류를 빠르게 확인하세요.</p>
-  </header>
+    <div class="container">
+        <header>
+            <h1>📱 휴대폰 개통 업무유형별 구비서류 안내</h1>
+            <p class="subtitle">매장 직원용 구비서류 조회 시스템</p>
+        </header>
 
-  <main>
-    <div class="card banner">
-      <div><strong>사용법</strong> ① 업무처리 유형 → ② 상세유형1 → ③ 상세유형2 순서로 선택하세요. 선택에 따라 다음 옵션이 자동으로 좁혀집니다.</div>
+        <main>
+            <div class="selection-panel">
+                <div class="form-group">
+                    <label for="업무처리유형">업무처리 유형</label>
+                    <select id="업무처리유형" class="form-select">
+                        <option value="">선택하세요</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="상세유형1">상세유형 1</label>
+                    <select id="상세유형1" class="form-select" disabled>
+                        <option value="">먼저 업무처리 유형을 선택하세요</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="상세유형2">상세유형 2</label>
+                    <select id="상세유형2" class="form-select" disabled>
+                        <option value="">먼저 상세유형 1을 선택하세요</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="result-panel" class="result-panel" style="display: none;">
+                <div class="result-section">
+                    <h2>📋 필수 서류</h2>
+                    <div id="필수서류" class="content-box"></div>
+                </div>
+
+                <div class="result-section">
+                    <h2>ℹ️ 상황별 안내사항</h2>
+                    <div id="상황별안내사항" class="content-box"></div>
+                </div>
+
+                <div class="result-section">
+                    <h2>💡 공통 전달사항</h2>
+                    <div id="공통전달사항" class="content-box"></div>
+                </div>
+            </div>
+
+            <div id="no-result" class="no-result" style="display: none;">
+                <p>⚠️ 선택한 조건에 해당하는 데이터가 없습니다.</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2025 휴대폰 개통 업무 지원 시스템</p>
+        </footer>
     </div>
 
-    <div class="card">
-      <div class="row">
-        <div>
-          <label for="type1">① 업무처리 유형</label>
-          <select id="type1"><option value="">선택하세요</option></select>
-        </div>
-        <div>
-          <label for="type2">② 상세유형 1</label>
-          <select id="type2" disabled><option value="">먼저 ①을 선택</option></select>
-        </div>
-        <div>
-          <label for="type3">③ 상세유형 2</label>
-          <select id="type3" disabled><option value="">먼저 ②를 선택</option></select>
-        </div>
-      </div>
-      <div class="hint">키보드로도 사용 가능: <span class="kbd">Alt</span> + <span class="kbd">↓</span> 로 펼치기</div>
-    </div>
-
-    <div id="result" class="card" style="display:none">
-      <h2>필수 서류</h2>
-      <ul id="required"></ul>
-
-      <h2 style="margin-top:16px">방문자별 추가 서류</h2>
-      <div id="visitor" class="grid-2"></div>
-    </div>
-    
-    <hr class="sep">
-
-    <h2 style="margin-top:16px">필요 서류 안내문자</h2>
-    <div class="row">
-      <div>
-        <label for="visitType">방문자 유형(선택)</label>
-        <select id="visitType">
-          <option value="">선택 안 함(조건별 전체 안내)</option>
-        </select>
-      </div>
-      <div style="display:flex;align-items:flex-end;gap:8px">
-        <button class="btn" id="compose">메시지 만들기</button>
-        <button class="btn" id="copyMsg" style="background:#64748b">복사</button>
-      </div>
-    </div>
-
-    <textarea id="msg" placeholder="버튼을 눌러 자동완성합니다."></textarea>
-
-    <div class="card">
-      <h2>추가 전달사항</h2>
-      <ol class="fixed-note">
-        <li>제출 서류는 모두 "발급 3개월 이내"만 인정</li>
-        <li>열람용 파일이 아닌, "출력해온 발급 서류"만 인정</li>
-      </ol>
-    </div>
-
-
-    <div class="footer">Made by. kt m&s 충청소매지사</div>
-  </main>
-
-  <script>
-    const state = {
-      data:null,
-      selected:{ a:'', b:'', c:'' }
-    };
-
-    async function loadData(){
-      const res = await fetch('data.json',{cache:'no-store'});
-      state.data = await res.json();
-      // ① 채우기
-      const type1 = document.getElementById('type1');
-      state.data.options['업무처리유형'].forEach(v=>{
-        const o=document.createElement('option'); o.value=v; o.textContent=v; type1.appendChild(o);
-      });
-    }
-
-    function fillDetail1(){
-      const t1 = document.getElementById('type1').value;
-      const type2 = document.getElementById('type2');
-      type2.innerHTML = '<option value="">선택하세요</option>';
-      const map = state.data.options['상세유형1'][t1] || [];
-      map.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; type2.appendChild(o); });
-      type2.disabled = !map.length;
-      // reset ③
-      const type3 = document.getElementById('type3');
-      type3.innerHTML = '<option value="">먼저 ②를 선택</option>';
-      type3.disabled = true;
-      clearResult();
-    }
-
-    function fillDetail2(){
-      const t1 = document.getElementById('type1').value;
-      const t2 = document.getElementById('type2').value;
-      const type3 = document.getElementById('type3');
-      type3.innerHTML = '<option value="">선택하세요</option>';
-      const key = `${t1}||${t2}`;
-      const map = state.data.options['상세유형2'][key] || [];
-      map.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; type3.appendChild(o); });
-      type3.disabled = !map.length;
-      clearResult();
-    }
-
-    function renderResult(){
-      const t1 = document.getElementById('type1').value;
-      const t2 = document.getElementById('type2').value;
-      const t3 = document.getElementById('type3').value;
-
-      if(!t1 || !t2 || !t3){ clearResult(); return; }
-      const rec = state.data.records.find(r=> r['업무처리유형']===t1 && r['상세유형1']===t2 && r['상세유형2']===t3 );
-      if(!rec){ clearResult(); return; }
-      const result = document.getElementById('result');
-      const ul = document.getElementById('required'); ul.innerHTML='';
-      (rec['필수서류'] || []).forEach(item=>{
-        const li=document.createElement('li'); li.textContent=item; ul.appendChild(li);
-      });
-
-      const visitorWrap = document.getElementById('visitor'); visitorWrap.innerHTML='';
-      const byVisitor = rec['방문자별추가서류'] || {};
-      
-      fillVisitorSelect(byVisitor); // 방문자 유형 드롭다운 동기화
-      document.getElementById('msg').value = ''; // 선택 바뀌면 메시지 초기화
-      
-      Object.keys(byVisitor).forEach(section=>{
-        const box = document.createElement('div'); box.className='visitor';
-        const title = document.createElement('div'); title.innerHTML = `<span class="pill">${section}</span>`;
-        const l = document.createElement('ul');
-        byVisitor[section].forEach(i=>{ const li=document.createElement('li'); li.textContent=i; l.appendChild(li); });
-        box.appendChild(title); box.appendChild(l); visitorWrap.appendChild(box);
-      });
-
-      result.style.display='block';
-    }
-
-    function clearResult(){
-      document.getElementById('result').style.display='none';
-      document.getElementById('required').innerHTML='';
-      document.getElementById('visitor').innerHTML='';
-      const vt = document.getElementById('visitType');
-      if (vt) vt.innerHTML = '<option value="">선택 안 함(조건별 전체 안내)</option>';
-      const ta = document.getElementById('msg');
-      if (ta) ta.value = '';
-    }
-    // wire
-    window.addEventListener('DOMContentLoaded', ()=>{
-      loadData().then(loadNotes);
-      document.getElementById('type1').addEventListener('change', fillDetail1);
-      document.getElementById('type2').addEventListener('change', fillDetail2);
-      document.getElementById('type3').addEventListener('change', renderResult);
-    });
-
-      const composeBtn = document.getElementById('compose');
-      if (composeBtn) composeBtn.addEventListener('click', composeMessage);
-
-      const copyBtn = document.getElementById('copyMsg');
-      if (copyBtn) copyBtn.addEventListener('click', copyMessage);
-        /* ---------- 안내문자 자동완성 헬퍼 ---------- */
-    function getSelectedKeys(){
-      const t1 = document.getElementById('type1')?.value || '';
-      const t2 = document.getElementById('type2')?.value || '';
-      const t3 = document.getElementById('type3')?.value || '';
-      return { t1, t2, t3 };
-    }
-
-    function getCurrentRecord(){
-      if(!state?.data?.records) return null;
-      const { t1, t2, t3 } = getSelectedKeys();
-      if(!t1 || !t2 || !t3) return null;
-      return state.data.records.find(r =>
-        r['업무처리유형']===t1 && r['상세유형1']===t2 && r['상세유형2']===t3
-      ) || null;
-    }
-
-    function fillVisitorSelect(byVisitor){
-      const sel = document.getElementById('visitType');
-      if(!sel) return;
-      sel.innerHTML = '<option value="">선택 안 함(조건별 전체 안내)</option>';
-      Object.keys(byVisitor||{}).forEach(k=>{
-        const o = document.createElement('option'); o.value = k; o.textContent = k;
-        sel.appendChild(o);
-      });
-    }
-
-    function composeMessage(){
-      const rec = getCurrentRecord();
-      if(!rec){ alert('먼저 ①②③을 모두 선택하세요.'); return; }
-
-      const { t1, t2, t3 } = getSelectedKeys();
-      const visitType = document.getElementById('visitType')?.value || '';
-      const requiredList = (rec['필수서류'] || []).map(s => `- ${s}`).join('\n') || '-';
-
-      // 조건별(방문자별) 구비서류
-      let optionalBlock = '';
-      const byVisitor = rec['방문자별추가서류'] || {};
-      if (visitType) {
-        const arr = byVisitor[visitType] || [];
-        if (arr.length){
-          optionalBlock = `\n[조건별 구비서류 – ${visitType}]\n` + arr.map(s=>`- ${s}`).join('\n');
-        }
-      } else {
-        const parts = Object.keys(byVisitor).map(k=>{
-          const arr = byVisitor[k] || [];
-          if(!arr.length) return '';
-          return `[조건별 구비서류 – ${k}]\n` + arr.map(s=>`- ${s}`).join('\n');
-        }).filter(Boolean);
-        if (parts.length) optionalBlock = '\n' + parts.join('\n\n');
-      }
-
-      const title = `[KT] 구비서류 안내`;
-      const header = `${t1} / ${t2} / ${t3}`;
-      const tail = `\n\n※ 모든 서류는 발급 3개월 이내 원본 기준\n※ 문의: KT 매장`;
-
-      const msg = `${title}\n${header}\n\n[필수 구비서류]\n${requiredList}${optionalBlock}${tail}`;
-      const ta = document.getElementById('msg');
-      if (ta) ta.value = msg;
-    }
-
-    function copyMessage(){
-      const ta = document.getElementById('msg');
-      if(!ta || !ta.value.trim()){ alert('먼저 메시지를 생성하세요.'); return; }
-      if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(ta.value).then(()=>alert('복사되었습니다.'));
-      } else {
-        ta.select(); document.execCommand('copy'); alert('복사되었습니다.');
-      }
-    }
-
-  </script>
+    <script src="app.js"></script>
 </body>
 </html>
