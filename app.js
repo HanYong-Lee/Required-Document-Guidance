@@ -1,7 +1,7 @@
 let data = {};
 
 // JSON 데이터 로드
-fetch('document_guide.json')
+fetch('data.json')
     .then(response => response.json())
     .then(jsonData => {
         data = jsonData;
